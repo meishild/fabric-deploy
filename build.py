@@ -8,6 +8,7 @@
 # description     :
 # ==============================================================================
 import os
+import platform
 import shutil
 
 from jinja2 import Environment, PackageLoader
@@ -340,7 +341,10 @@ def deploy():
         if not os.path.isdir(folder):
             os.makedirs(folder)
 
-    shutil.copytree(path + "/templates/bin/linux", deploy_path + "bin")
+    if platform.platform().split("-")[0] == "Darwin":
+        shutil.copytree(path + "/templates/bin/Darwin", deploy_path + "bin")
+    else:
+        shutil.copytree(path + "/templates/bin/linux", deploy_path + "bin")
 
     for org in org_config:
         build_zk_kafka_config(org)

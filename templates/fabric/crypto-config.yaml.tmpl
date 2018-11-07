@@ -26,7 +26,7 @@ PeerOrgs:
   # Org1
   # ---------------------------------------------------------------------------
   - Name: {{ org.name }}
-    Domain: {{ org.domain }}
+    Domain: {{ org.title }}.{{ org.domain }}
     EnableNodeOUs: true
     CA:
         Country: US
