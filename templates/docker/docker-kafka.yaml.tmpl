@@ -1,0 +1,35 @@
+# @author haiyang.song
+# @date 2018-11-6
+
+version: '2'
+
+services:
+  {{ k.name }}:
+    image: hyperledger/fabric-kafka
+    restart: always
+    container_name: {{ k.name }}
+    hostname: {{ k.name }}
+    environment:
+      - KAFKA_BROKER_ID={{ k.id }}
+      # min.insync.replicas=M --- 设置一个M值（例如1<M<N，查看下面的default.replication.factor）
+      # 数据提交时会写入至少M个副本（这些数据然后会被同步并且归属到in-sync副本集合或ISR）。
+      # 其它情况，写入操作会返回一个错误。接下来：
+      # 1. 如果channel写入的数据多达N-M个副本变的不可用，操作可以正常执行。
+      # 2. 如果有更多的副本不可用，Kafka不可以维护一个有M数量的ISR集合，因此Kafka停止接收写操作。Channel只有当同步M个副本后才可以重新可以写。
+      - KAFKA_MIN_INSYNC_REPLICAS=2
+      - KAFKA_DEFAULT_REPLICATION_FACTOR=3
+      # 指向Zookeeper节点的集合，其中包含ZK的集合。
+      - KAFKA_ZOOKEEPER_CONNECT={{ zoo_servers }}
+      # message.max.bytes
+      # The maximum size of envelope that the broker can receive.
+      - KAFKA_MESSAGE_MAX_BYTES=103809024 # 99 * 1024 * 1024 B
+      - KAFKA_REPLICA_FETCH_MAX_BYTES=103809024 # 99 * 1024 * 1024 B
+      - KAFKA_UNCLEAN_LEADER_ELECTION_ENABLE=false
+      - KAFKA_LOG_RETENTION_MS=-1
+    volumes:{% for volume in k.volumes %}
+      - {{ volume }}{% endfor %}
+    extra_hosts:{% for host in zk_hosts %}
+      - "{{ host }}"{% endfor %}{% for host in kafka_hosts %}
+      - "{{ host }}"{% endfor %}
+    ports:{% for port in k.ports %}
+      - "{{ port }}{% endfor %}

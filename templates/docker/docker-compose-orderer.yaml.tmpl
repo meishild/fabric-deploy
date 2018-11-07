@@ -1,0 +1,38 @@
+# @author haiyang.song
+# @date 2018-11-6
+
+version: '2'
+
+services:
+  {{ o.name }}:
+    image: hyperledger/fabric-orderer
+    container_name: {{ o.name }}
+    environment:
+      - ORDERER_GENERAL_LOGLEVEL=debug
+      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+      - ORDERER_GENERAL_LISTENPORT={{ o.port }}
+      - ORDERER_GENERAL_GENESISMETHOD=file
+      - ORDERER_GENERAL_GENESISFILE=/var/hyperledger/orderer/orderer.genesis.block
+      - ORDERER_GENERAL_LOCALMSPID={{ o.mspid }}
+      - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp
+      # enabled TLS
+      - ORDERER_GENERAL_TLS_ENABLED=true
+      - ORDERER_GENERAL_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_KAFKA_RETRY_LONGINTERVAL=10s
+      - ORDERER_KAFKA_RETRY_LONGTOTAL=100s
+      - ORDERER_KAFKA_RETRY_SHORTINTERVAL=1s
+      - ORDERER_KAFKA_RETRY_SHORTTOTAL=30s
+      - ORDERER_KAFKA_VERBOSE=true
+      - ORDERER_KAFKA_BROKERS=[{{ kafka_ports }}]
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric
+    command: orderer
+    volumes:{% for volume in o.volumes %}
+      - {{ volume }} {% endfor %}
+    ports:{% for port in o.ports %}
+      - {{ port }} {% endfor %}
+    extra_hosts:{% for host in zk_hosts %}
+      - "{{ host }}"{% endfor %}{% for host in kafka_hosts %}
+      - "{{ host }}"{% endfor %}{% for host in orderer_hosts %}
+      - "{{ host }}"{% endfor %}
