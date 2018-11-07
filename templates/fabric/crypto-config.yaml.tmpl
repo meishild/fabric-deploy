@@ -15,7 +15,7 @@ OrdererOrgs:
         Locality: San Francisco
 
     Specs:{% for host in orderer.hosts %}
-      - Hostname： {{host}}{% endfor %}
+        - Hostname： {{host}}{% endfor %}
 
 # ---------------------------------------------------------------------------
 # "PeerOrgs" - Definition of organizations managing peer nodes
@@ -33,6 +33,6 @@ PeerOrgs:
         Province: California
         Locality: San Francisco
     Template:
-      Count: 2
+        Count: 2
     Users:
-      Count: 1{% endfor %}
+        Count: 1{% endfor %}

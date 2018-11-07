@@ -1,0 +1,29 @@
+# @author haiyang.song
+# @date 2018-11-6
+
+version: '2'
+
+services:
+  z2:
+    image: hyperledger/fabric-zookeeper
+    restart: always
+    container_name: z2
+    hostname: z2
+    environment:
+      - quorumListenOnAllIPs=true
+      # ID在集合中必须是唯一的并且应该有一个值在1-255之间。
+      - ZOO_MY_ID=2
+      # 组成ZK集合的服务器列表。客户端使用的列表必须与ZooKeeper服务器列表所拥有的每一个ZK服务器相匹配。
+      # 有两个端口号：第一个是追随者用来连接领导者的，第二个是领导人选举。
+      - ZOO_SERVERS=server.1=z1:2888:3888 server.2=z2:2888:3888 server.3=z3:2888:3888
+    volumes:
+      - /opt/chainData/zookeeper/z2/:/data/
+    extra_hosts:
+      - "z1:10.0.0.21"
+      - "z2:10.0.0.22"
+      - "z3:10.0.0.23"
+    ports:
+      - "2181:2181"
+      - "2888:2888"
+      - "3888:3888"
+      - "9092:9092"
