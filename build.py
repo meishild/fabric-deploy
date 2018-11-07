@@ -146,7 +146,7 @@ def __get_orderer_addresses():
 
 def __save_file(folder, name, content):
     if not os.path.isdir(folder):
-        os.mkdir(folder)
+        os.makedirs(folder)
 
     f = open(folder + "/" + name, "w")
     f.write(content)
@@ -154,7 +154,7 @@ def __save_file(folder, name, content):
 
 
 def build_zk_kafka_config(org):
-    zk_org = org['zookeeper']
+    zk_org = orderer_config['zookeeper']
     zookeeper_list = []
     for i in range(0, len(zk_org['ips'])):
         id = i + 1
@@ -179,11 +179,11 @@ def build_zk_kafka_config(org):
             zoo_servers=" ".join(["server.%(id)d=%(name)s:%(port1)d:%(port2)d" % zk for zk in zookeeper_list]),
             zk_hosts=__get_zk_hosts()
         )
-        folder = deploy_path + "/%s/%s" % (org['name'], zk['ip'])
+        folder = deploy_path + "/%s/%s" % (org['title'], zk['ip'])
         __save_file(folder, "docker-zk.yaml", result)
 
     kafka_list = []
-    k_org = org['kafka']
+    k_org = orderer_config['kafka']
     for i in range(0, len(k_org['ips'])):
         id = i + 1
         kafka_list.append(
@@ -206,7 +206,7 @@ def build_zk_kafka_config(org):
             zk_hosts=__get_zk_hosts(),
             kafka_hosts=__get_kafka_hosts()
         )
-        folder = deploy_path + "/%s/%s" % (org['name'], k['ip'])
+        folder = deploy_path + "/%s/%s" % (org['title'], k['ip'])
         __save_file(folder, "docker-kafka.yaml", result)
 
 
@@ -244,7 +244,7 @@ def build_orderer_config(org):
             kafka_hosts=__get_kafka_hosts(),
             kafka_ports=",".join(__get_kafka_ports())
         )
-        folder = deploy_path + "/%s/%s" % (org['name'], orderer['ip'])
+        folder = deploy_path + "/%s/%s" % (org['title'], orderer['ip'])
         __save_file(folder, "docker-compose-orderer.yaml", result)
 
 
@@ -295,7 +295,7 @@ def build_peer_config(org):
             peer_hosts=["%(name)s:%(ip)s" % peer for peer in peer_list]
         )
 
-        folder = deploy_path + "/%s/%s" % (org['name'], peer['ip'])
+        folder = deploy_path + "/%s/%s" % (org['title'], peer['ip'])
         __save_file(folder, "docker-compose-peer.yaml", result)
 
 
@@ -331,12 +331,15 @@ def build_generate_bash():
 
 
 def deploy():
+    if os.path.isdir(deploy_path):
+        shutil.rmtree(deploy_path)
+        os.makedirs(deploy_path)
+
     folders = [deploy_path + "/channel-artifacts", deploy_path + "/crypto-config"]
     for folder in folders:
         if not os.path.isdir(folder):
             os.mkdir(folder)
 
-    os.rmdir(deploy_path + "bin")
     shutil.copytree(path + "/templates/bin", deploy_path + "bin")
 
     for org in org_config:
