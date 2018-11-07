@@ -338,7 +338,7 @@ def deploy():
     folders = [deploy_path + "/channel-artifacts", deploy_path + "/crypto-config"]
     for folder in folders:
         if not os.path.isdir(folder):
-            os.mkdir(folder)
+            os.makedirs(folder)
 
     shutil.copytree(path + "/templates/bin", deploy_path + "bin")
 
