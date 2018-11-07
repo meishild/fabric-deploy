@@ -32,4 +32,4 @@ services:
       - "{{ host }}"{% endfor %}{% for host in kafka_hosts %}
       - "{{ host }}"{% endfor %}
     ports:{% for port in k.ports %}
-      - "{{ port }}{% endfor %}
+      - "{{ port }}"{% endfor %}
