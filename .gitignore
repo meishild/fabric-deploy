@@ -27,7 +27,6 @@ antx.properties
 target
 *.pmd
 *.class
-bin
 *.iml
 .idea
 logs
