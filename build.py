@@ -190,7 +190,7 @@ def build_zk_kafka_config(org):
         kafka_list.append(
             {
                 'id': id,
-                'name': 'k%d' % i,
+                'name': 'k%d' % id,
                 'ip': k_org['ips'][i],
                 'port': k_org['ports'][0],
                 'volumes': ['/opt/chainData/kafka/k%d/:/data/' % id],
