@@ -340,7 +340,7 @@ def deploy():
         if not os.path.isdir(folder):
             os.makedirs(folder)
 
-    shutil.copytree(path + "/templates/bin", deploy_path + "bin")
+    shutil.copytree(path + "/templates/bin/linux", deploy_path + "bin")
 
     for org in org_config:
         build_zk_kafka_config(org)

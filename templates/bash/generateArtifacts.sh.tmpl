@@ -80,19 +80,19 @@ function generateChannelArtifacts() {
 	echo "##########################################################"
 	# Note: For some unknown reason (at least for now) the block file can't be
 	# named orderer.genesis.block or the orderer will fail to launch!
-	configtxgen -profile TwoOrgsOrdererGenesis2 -outputBlock ./channel-artifacts/genesis.block
+	configtxgen -profile TwoOrgsOrdererGenesis -outputBlock ./channel-artifacts/genesis.block
 
 	echo
 	echo "#################################################################"
 	echo "### Generating channel configuration transaction 'channel.tx' ###"
 	echo "#################################################################"
-	configtxgen -profile TwoOrgsChannel2 -outputCreateChannelTx ./channel-artifacts/channel.tx -channelID $CHANNEL_NAME
+	configtxgen -profile TwoOrgsChannel -outputCreateChannelTx ./channel-artifacts/channel.tx -channelID $CHANNEL_NAME
     {% for org in org_list %}
 	echo
 	echo "#################################################################"
 	echo "#######    Generating anchor peer update for {{ org.mspid }}   ##########"
 	echo "#################################################################"
-	configtxgen -profile TwoOrgsChannel2 -outputAnchorPeersUpdate ./channel-artifacts/{{ org.mspid }}anchors.tx -channelID $CHANNEL_NAME -asOrg {{ org.mspid }}
+	configtxgen -profile TwoOrgsChannel -outputAnchorPeersUpdate ./channel-artifacts/{{ org.mspid }}anchors.tx -channelID $CHANNEL_NAME -asOrg {{ org.mspid }}
     {% endfor %}
     echo
 }
