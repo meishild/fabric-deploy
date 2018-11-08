@@ -227,10 +227,10 @@ def build_orderer_config(org):
             'ports': ['%s:%s' % (port, port) for port in orderer_config['ports']],
             'volumes': [
                 '/opt/chainData/orderer/orderer%d/:/var/hyperledger/production/' % id,
-                '../channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block',
-                '../crypto-config/ordererOrganizations/%s/orderers/orderer%d.%s/msp:/var/hyperledger/orderer/msp' % (
+                './channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block',
+                './crypto-config/ordererOrganizations/%s/orderers/orderer%d.%s/msp:/var/hyperledger/orderer/msp' % (
                     domain, id, domain),
-                '../crypto-config/ordererOrganizations/%s/orderers/orderer%i.%s/tls:/var/hyperledger/orderer/tls' % (
+                './crypto-config/ordererOrganizations/%s/orderers/orderer%i.%s/tls:/var/hyperledger/orderer/tls' % (
                     domain, id, domain),
             ]
         })
@@ -270,9 +270,9 @@ def build_peer_config(org):
                 'volumes': [
                     '/var/run/:/host/var/run/',
                     '/opt/chainData/peer/peer%d:/var/hyperledger/production' % id,
-                    '../crypto-config/peerOrganizations/%s/peers/peer%d.%s/msp:/etc/hyperledger/fabric/msp' % (
+                    './crypto-config/peerOrganizations/%s/peers/peer%d.%s/msp:/etc/hyperledger/fabric/msp' % (
                         domain, id, domain),
-                    '../crypto-config/peerOrganizations/%s/peers/peer%d.%s/tls:/etc/hyperledger/fabric/tls' % (
+                    './crypto-config/peerOrganizations/%s/peers/peer%d.%s/tls:/etc/hyperledger/fabric/tls' % (
                         domain, id, domain),
                 ],
                 "db": {
@@ -353,6 +353,20 @@ def deploy():
     build_crypto_config()
     build_configtx_config()
     build_generate_bash()
+
+    print("#########  generateArtifacts ##############\n")
+    os.system("cd deploy && sh generateArtifacts.sh")
+
+    print("#########  Copy File ##############\n")
+    # 复制生成好的crypto-config和channel-artifacts
+    for org in org_config:
+        for folder in os.listdir(deploy_path + org['title']):
+            shutil.copytree(deploy_path + "channel-artifacts", "%s/%s/channel-artifacts" % (deploy_path + org['title'], folder))
+            shutil.copytree(deploy_path + "crypto-config", "%s/%s/crypto-config" % (deploy_path + org['title'], folder))
+            shutil.copy(deploy_path + "crypto-config.yaml", "%s/%s" % (deploy_path + org['title'], folder))
+            shutil.copy(deploy_path + "configtx.yaml", "%s/%s" % (deploy_path + org['title'], folder))
+
+    print("#########  Copy Finish ##############\n")
 
 
 deploy()
