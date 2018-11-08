@@ -255,7 +255,7 @@ def build_peer_config(org):
     domain = org['domain']
     peer_org = org['peer']
     for i in range(0, len(org['peer']['ips'])):
-        id = i + 1
+        id = i
         peer_list.append(
             {
                 "id": id,
@@ -270,10 +270,10 @@ def build_peer_config(org):
                 'volumes': [
                     '/var/run/:/host/var/run/',
                     '/opt/chainData/peer/peer%d:/var/hyperledger/production' % id,
-                    './crypto-config/peerOrganizations/%s/peers/peer%d.%s/msp:/etc/hyperledger/fabric/msp' % (
-                        domain, id, domain),
-                    './crypto-config/peerOrganizations/%s/peers/peer%d.%s/tls:/etc/hyperledger/fabric/tls' % (
-                        domain, id, domain),
+                    './crypto-config/peerOrganizations/%s.%s/peers/peer%d.%s.%s/msp:/etc/hyperledger/fabric/msp' % (
+                        org['title'], domain, id, org['title'], domain),
+                    './crypto-config/peerOrganizations/%s.%s/peers/peer%d.%s.%s/tls:/etc/hyperledger/fabric/tls' % (
+                        org['title'], domain, id, org['title'], domain),
                 ],
                 "db": {
                     "name": "couchdb%d.%s" % (id, domain),
