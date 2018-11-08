@@ -41,6 +41,7 @@ services:
     command: peer node start
     extra_hosts:{% for host in orderer_hosts %}
       - "{{ host }}"{% endfor %}{% for host in peer_hosts %}
+      - "{{ host }}"{% endfor %}{% for host in couchdb_hosts %}
       - "{{ host }}"{% endfor %}
     volumes:{% for volume in p.volumes %}
       - "{{ volume }}"{% endfor %}

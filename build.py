@@ -277,6 +277,7 @@ def build_peer_config(org):
                 ],
                 "db": {
                     "name": "couchdb%d.%s" % (id, domain),
+                    "ip": peer_org['ips'][i],
                     "port": peer_org['db']['port'],
                     "user": peer_org['db']['user'],
                     "password": peer_org['db']['password'],
@@ -293,7 +294,8 @@ def build_peer_config(org):
         result = tmpl.render(
             p=peer,
             orderer_hosts=__get_orderer_hosts(),
-            peer_hosts=["%(name)s:%(ip)s" % peer for peer in peer_list]
+            peer_hosts=["%(name)s:%(ip)s" % peer for peer in peer_list],
+            couchdb_hosts=["%(name)s:%(ip)s" % peer['db'] for peer in peer_list]
         )
 
         folder = deploy_path + "/%s/%s" % (org['title'], peer['ip'])
