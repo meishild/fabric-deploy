@@ -12,6 +12,8 @@ services:
       - COUCHDB_PASSWORD={{ p.db.password }}
     volumes:{% for volume in p.db.volumes %}
       - {{ volume }}{% endfor %}
+    ports:
+      - "{{ p.db.port }}:{{ p.db.port }}"
 
   {{ p.name }}:
     container_name: {{ p.name }}
@@ -29,7 +31,7 @@ services:
       - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
       - CORE_PEER_ID={{ p.name }}
       - CORE_PEER_ADDRESS={{ p.name }}:{{ p.port0 }}
-      - CORE_PEER_CHAINCODELISTENADDRESS={{ p.name }}:{{ p.port1 }}
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:{{ p.port1 }}
       - CORE_PEER_GOSSIP_EXTERNALENDPOINT={{ p.name }}:{{ p.port0 }}
       - CORE_PEER_GOSSIP_BOOTSTRAP={{ p.name }}:{{ p.port0 }}
       - CORE_PEER_LOCALMSPID={{ p.mspid }}
