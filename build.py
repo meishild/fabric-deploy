@@ -252,7 +252,7 @@ def build_orderer_config(org):
 def build_peer_config(org):
     peer_list = []
 
-    domain = org['domain']
+    domain = "%s.%s" % (org['title'], org['domain'])
     peer_org = org['peer']
     for i in range(0, len(org['peer']['ips'])):
         id = i
@@ -270,10 +270,10 @@ def build_peer_config(org):
                 'volumes': [
                     '/var/run/:/host/var/run/',
                     '/opt/chainData/peer/peer%d:/var/hyperledger/production' % id,
-                    './crypto-config/peerOrganizations/%s.%s/peers/peer%d.%s.%s/msp:/etc/hyperledger/fabric/msp' % (
-                        org['title'], domain, id, org['title'], domain),
-                    './crypto-config/peerOrganizations/%s.%s/peers/peer%d.%s.%s/tls:/etc/hyperledger/fabric/tls' % (
-                        org['title'], domain, id, org['title'], domain),
+                    './crypto-config/peerOrganizations/%s/peers/peer%d.%s/msp:/etc/hyperledger/fabric/msp' % (
+                        domain, id, domain),
+                    './crypto-config/peerOrganizations/%s/peers/peer%d.%s/tls:/etc/hyperledger/fabric/tls' % (
+                        domain, id, domain),
                 ],
                 "db": {
                     "name": "couchdb%d.%s" % (id, domain),
@@ -288,10 +288,8 @@ def build_peer_config(org):
             }
         )
 
-    tmpl = env.get_template('docker-compose-peer.yaml.tmpl')
-
     for peer in peer_list:
-        result = tmpl.render(
+        result = env.get_template('docker-compose-peer.yaml.tmpl').render(
             p=peer,
             orderer_hosts=__get_orderer_hosts(),
             peer_hosts=["%(name)s:%(ip)s" % peer for peer in peer_list],
@@ -300,6 +298,19 @@ def build_peer_config(org):
 
         folder = deploy_path + "/%s/%s" % (org['title'], peer['ip'])
         __save_file(folder, "docker-compose-peer.yaml", result)
+
+        result = env.get_template('docker-compose-cli.yaml.tmpl').render(
+            p=peer,
+            orderer_hosts=__get_orderer_hosts(),
+            peer_hosts=["%(name)s:%(ip)s" % peer for peer in peer_list],
+            couchdb_hosts=["%(name)s:%(ip)s" % peer['db'] for peer in peer_list],
+        )
+
+        folder = deploy_path + "/%s/%s" % (org['title'], peer['ip'])
+        __save_file(folder, "docker-compose-cli.yaml", result)
+
+        peer_bash = b_env.get_template('peer.sh.tmpl').render(p=peer)
+        __save_file(folder + "/scripts", "peer.sh", peer_bash)
 
 
 def build_crypto_config():
@@ -343,11 +354,6 @@ def deploy():
         if not os.path.isdir(folder):
             os.makedirs(folder)
 
-    if platform.platform().split("-")[0] == "Darwin":
-        shutil.copytree(path + "/templates/bin/Darwin", deploy_path + "bin")
-    else:
-        shutil.copytree(path + "/templates/bin/linux", deploy_path + "bin")
-
     for org in org_config:
         build_zk_kafka_config(org)
         build_orderer_config(org)
@@ -357,6 +363,11 @@ def deploy():
     build_generate_bash()
 
     print("#########  generateArtifacts ##############\n")
+    if platform.platform().split("-")[0] == "Darwin":
+        shutil.copytree(path + "/templates/bin/Darwin", deploy_path + "bin")
+    else:
+        shutil.copytree(path + "/templates/bin/linux", deploy_path + "bin")
+
     os.system("cd deploy && sh generateArtifacts.sh")
 
     print("#########  Copy File ##############\n")
@@ -367,6 +378,11 @@ def deploy():
             shutil.copytree(deploy_path + "crypto-config", "%s/%s/crypto-config" % (deploy_path + org['title'], folder))
             shutil.copy(deploy_path + "crypto-config.yaml", "%s/%s" % (deploy_path + org['title'], folder))
             shutil.copy(deploy_path + "configtx.yaml", "%s/%s" % (deploy_path + org['title'], folder))
+
+            if platform.platform().split("-")[0] == "Darwin":
+                shutil.copytree(path + "/templates/bin/Darwin", "%s/%s/bin/" % (deploy_path + org['title'], folder))
+            else:
+                shutil.copytree(path + "/templates/bin/linux", "%s/%s/bin/" % (deploy_path + org['title'], folder))
 
     print("#########  Copy Finish ##############\n")
 
