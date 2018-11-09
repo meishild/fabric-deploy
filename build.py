@@ -24,6 +24,8 @@ b_env = Environment(loader=PackageLoader('templates', 'bash'))
 部署要求：同一台机器内不能部署两个机构数据
 """
 
+volumes_path = "/opt/chainData"
+
 orderer_config = {
     'title': 'orderer',
     'name': 'Orderer',
@@ -42,7 +44,7 @@ orderer_config = {
     },
 }
 
-org_config = [
+org_config_list = [
     {
         'title': 'org1',
         'name': 'Org1',
@@ -62,6 +64,9 @@ org_config = [
                     'port': 7051
                 }
             ]
+        },
+        'ca': {
+
         }
     },
     {
@@ -168,7 +173,7 @@ def build_zk_kafka_config():
                 'port0': zk_org['ports'][0],
                 'port1': zk_org['ports'][1],
                 'port2': zk_org['ports'][2],
-                'volumes': ['/opt/chainData/zookeeper/z%d/:/data/' % id],
+                'volumes': ['%s/zookeeper/z%d/:/data/' % (volumes_path, id)],
                 'ports': ['%s:%s' % (port, port) for port in zk_org['ports']]
             }
         )
@@ -194,7 +199,7 @@ def build_zk_kafka_config():
                 'name': 'k%d' % id,
                 'ip': k_org['ips'][i],
                 'port': k_org['ports'][0],
-                'volumes': ['/opt/chainData/kafka/k%d/:/data/' % id],
+                'volumes': ['%s/kafka/k%d/:/data/' % (volumes_path, id)],
                 'ports': ['%s:%s' % (port, port) for port in k_org['ports']]
             }
         )
@@ -229,7 +234,7 @@ def build_orderer_config():
             'mspid': orderer_config['mspid'],
             'ports': ['%s:%s' % (port, port) for port in orderer_config['ports']],
             'volumes': [
-                '/opt/chainData/orderer/orderer%d/:/var/hyperledger/production/' % id,
+                '%s/orderer/orderer%d/:/var/hyperledger/production/' % (volumes_path, id),
                 './channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block',
                 './crypto-config/ordererOrganizations/%s/orderers/orderer%d.%s/msp:/var/hyperledger/orderer/msp' % (
                     domain, id, domain),
@@ -257,6 +262,7 @@ def build_peer_config(org):
 
     domain = "%s.%s" % (org['title'], org['domain'])
     peer_org = org['peer']
+
     for i in range(0, len(org['peer']['ips'])):
         id = i
         peer_list.append(
@@ -272,20 +278,21 @@ def build_peer_config(org):
                 'ports': ['%s:%s' % (port, port) for port in peer_org['ports']],
                 'volumes': [
                     '/var/run/:/host/var/run/',
-                    '/opt/chainData/peer/peer%d:/var/hyperledger/production' % id,
+                    '%s/peer/peer%d:/var/hyperledger/production' % (volumes_path, id),
                     './crypto-config/peerOrganizations/%s/peers/peer%d.%s/msp:/etc/hyperledger/fabric/msp' % (
                         domain, id, domain),
                     './crypto-config/peerOrganizations/%s/peers/peer%d.%s/tls:/etc/hyperledger/fabric/tls' % (
                         domain, id, domain),
                 ],
                 "db": {
+                    "id": id,
                     "name": "couchdb%d.%s" % (id, domain),
                     "ip": peer_org['ips'][i],
                     "port": peer_org['db']['port'],
                     "user": peer_org['db']['user'],
                     "password": peer_org['db']['password'],
                     'volumes': [
-                        '/opt/chainData/couchdb/couchdb%d:/opt/couchdb/data' % id,
+                        '%s/couchdb/couchdb%d:/opt/couchdb/data' % (volumes_path, id),
                     ]
                 }
             }
@@ -315,13 +322,19 @@ def build_peer_config(org):
         peer_bash = b_env.get_template('peer.sh.tmpl').render(p=peer)
         __save_file(folder + "/scripts", "peer.sh", peer_bash)
 
+        peer_bash = b_env.get_template('initPeer.sh.tmpl').render(
+            p=peer,
+            volume="%s/couchdb/couchdb%d" % (volumes_path, peer['id'])
+        )
+        __save_file(folder + "/scripts", "initPeer.sh", peer_bash)
+
 
 def build_crypto_config():
     tmpl = f_env.get_template('crypto-config.yaml.tmpl')
 
     result = tmpl.render(
         orderer=orderer_config,
-        org_list=org_config,
+        org_list=org_config_list,
     )
     __save_file(deploy_path, "crypto-config.yaml", result)
 
@@ -331,7 +344,7 @@ def build_configtx_config():
 
     result = tmpl.render(
         orderer=orderer_config,
-        org_list=org_config,
+        org_list=org_config_list,
         orderer_addresses=__get_orderer_addresses(),
         kafka_brokers=__get_kafka_ports(),
     )
@@ -342,7 +355,7 @@ def build_generate_bash():
     tmpl = b_env.get_template('generateArtifacts.sh.tmpl')
 
     result = tmpl.render(
-        org_list=org_config,
+        org_list=org_config_list,
     )
     __save_file(deploy_path, "generateArtifacts.sh", result)
 
@@ -357,8 +370,7 @@ def deploy():
         if not os.path.isdir(folder):
             os.makedirs(folder)
 
-    for org in org_config:
-
+    for org in org_config_list:
         build_peer_config(org)
 
     build_orderer_config()
@@ -376,19 +388,27 @@ def deploy():
 
     print("#########  Copy File ##############\n")
     # 复制生成好的crypto-config和channel-artifacts
-    for org in org_config:
-        for folder in os.listdir(deploy_path + org['title']):
-            shutil.copytree(deploy_path + "channel-artifacts", "%s/%s/channel-artifacts" % (deploy_path + org['title'], folder))
-            shutil.copytree(deploy_path + "crypto-config", "%s/%s/crypto-config" % (deploy_path + org['title'], folder))
-            shutil.copy(deploy_path + "crypto-config.yaml", "%s/%s" % (deploy_path + org['title'], folder))
-            shutil.copy(deploy_path + "configtx.yaml", "%s/%s" % (deploy_path + org['title'], folder))
 
-            if platform.platform().split("-")[0] == "Darwin":
-                shutil.copytree(path + "/templates/bin/Darwin", "%s/%s/bin/" % (deploy_path + org['title'], folder))
-            else:
-                shutil.copytree(path + "/templates/bin/linux", "%s/%s/bin/" % (deploy_path + org['title'], folder))
+    for org in org_config_list:
+        for folder in os.listdir(deploy_path + org['title']):
+            __copy(deploy_path + org['title'] + "/" + folder)
+
+    for folder in os.listdir(deploy_path + "orderer"):
+        __copy(deploy_path + "/orderer/" + folder)
 
     print("#########  Copy Finish ##############\n")
+
+
+def __copy(to):
+    shutil.copytree(deploy_path + "channel-artifacts", "%s/channel-artifacts" % to)
+    shutil.copytree(deploy_path + "crypto-config", "%s/crypto-config" % to)
+    shutil.copy(deploy_path + "crypto-config.yaml", "%s" % to)
+    shutil.copy(deploy_path + "configtx.yaml", "%s" % to)
+
+    if platform.platform().split("-")[0] == "Darwin":
+        shutil.copytree(path + "/templates/bin/Darwin", "%s/bin/" % to)
+    else:
+        shutil.copytree(path + "/templates/bin/linux", "%s/bin/" % to)
 
 
 deploy()
