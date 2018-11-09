@@ -25,6 +25,7 @@ b_env = Environment(loader=PackageLoader('templates', 'bash'))
 """
 
 orderer_config = {
+    'title': 'orderer',
     'name': 'Orderer',
     'mspid': 'OrdererMSP',
     'domain': 'icdoit.com',
@@ -69,7 +70,7 @@ org_config = [
         'domain': 'test.com',
         'mspid': 'Org2MSP',
         'peer': {
-            'ips': ['10.0.0.24'],
+            'ips': ['10.0.0.25'],
             'ports': [7051, 7052, 7053],
             'db': {
                 "port": 5984,
@@ -154,7 +155,7 @@ def __save_file(folder, name, content):
     f.close()
 
 
-def build_zk_kafka_config(org):
+def build_zk_kafka_config():
     zk_org = orderer_config['zookeeper']
     zookeeper_list = []
     for i in range(0, len(zk_org['ips'])):
@@ -180,7 +181,7 @@ def build_zk_kafka_config(org):
             zoo_servers=" ".join(["server.%(id)d=%(name)s:%(port1)d:%(port2)d" % zk for zk in zookeeper_list]),
             zk_hosts=__get_zk_hosts()
         )
-        folder = deploy_path + "/%s/%s" % (org['title'], zk['ip'])
+        folder = deploy_path + "/%s/%s" % (orderer_config['title'], zk['ip'])
         __save_file(folder, "docker-zk.yaml", result)
 
     kafka_list = []
@@ -207,11 +208,13 @@ def build_zk_kafka_config(org):
             zk_hosts=__get_zk_hosts(),
             kafka_hosts=__get_kafka_hosts()
         )
-        folder = deploy_path + "/%s/%s" % (org['title'], k['ip'])
+        folder = deploy_path + "/%s/%s" % (orderer_config['title'], k['ip'])
         __save_file(folder, "docker-kafka.yaml", result)
 
 
-def build_orderer_config(org):
+def build_orderer_config():
+    build_zk_kafka_config()
+
     orderer_list = []
 
     domain = orderer_config['domain']
@@ -223,7 +226,7 @@ def build_orderer_config(org):
             "name": "orderer%d.%s" % (id, domain),
             "ip": orderer_config['ips'][i],
             'port': orderer_config['ports'][0],
-            'mspid': org['mspid'],
+            'mspid': orderer_config['mspid'],
             'ports': ['%s:%s' % (port, port) for port in orderer_config['ports']],
             'volumes': [
                 '/opt/chainData/orderer/orderer%d/:/var/hyperledger/production/' % id,
@@ -245,7 +248,7 @@ def build_orderer_config(org):
             kafka_hosts=__get_kafka_hosts(),
             kafka_ports=",".join(__get_kafka_ports())
         )
-        folder = deploy_path + "/%s/%s" % (org['title'], orderer['ip'])
+        folder = deploy_path + "/%s/%s" % (orderer_config['title'], orderer['ip'])
         __save_file(folder, "docker-compose-orderer.yaml", result)
 
 
@@ -355,9 +358,10 @@ def deploy():
             os.makedirs(folder)
 
     for org in org_config:
-        build_zk_kafka_config(org)
-        build_orderer_config(org)
+
         build_peer_config(org)
+
+    build_orderer_config()
     build_crypto_config()
     build_configtx_config()
     build_generate_bash()
