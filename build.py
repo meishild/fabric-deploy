@@ -305,24 +305,14 @@ def build_peer_config(org):
             p=peer,
             orderer_hosts=__get_orderer_hosts(),
             peer_hosts=["%(name)s:%(ip)s" % peer for peer in peer_list],
-            couchdb_hosts=["%(name)s:%(ip)s" % peer['db'] for peer in peer_list]
+            couchdb_hosts=["%(name)s:%(ip)s" % peer['db'] for peer in peer_list],
+            org=org
         )
 
         folder = deploy_path + "/%s/%s" % (org['title'], peer['ip'])
         __save_file(folder, "docker-compose-peer.yaml", result)
 
         if peer['ip'] == org['peer']['anchor_peers'][0]['ip']:
-            result = env.get_template('docker-compose-cli.yaml.tmpl').render(
-                p=peer,
-                org=org,
-                orderer_hosts=__get_orderer_hosts(),
-                peer_hosts=["%(name)s:%(ip)s" % peer for peer in peer_list],
-                couchdb_hosts=["%(name)s:%(ip)s" % peer['db'] for peer in peer_list],
-            )
-
-            folder = deploy_path + "/%s/%s" % (org['title'], peer['ip'])
-            __save_file(folder, "docker-compose-cli.yaml", result)
-
             peer_bash = b_env.get_template('peer.sh.tmpl').render(p=peer)
             __save_file(folder + "/scripts", "peer.sh", peer_bash)
 
