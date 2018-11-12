@@ -1,0 +1,160 @@
+#!/bin/bash
+
+echo "==========================CREATE CHANNEL========================="
+
+ORDERER_CA=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/{{o.domain}}/orderers/orderer1.{{org.title}}.{{org.domain}}/msp/tlscacerts/tlsca.{{o.domain}}-cert.pem
+PEER0_ORG_CA=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/{{org.title}}.{{org.domain}}/peers/peer0.{{org.title}}.{{org.domain}}/tls/ca.crt
+
+CHANNEL_NAME="$1"
+: ${CHANNEL_NAME:="mychannel"}
+: ${TIMEOUT:="60"}
+COUNTER=1
+MAX_RETRY=5
+
+checkOSNAvailability() {
+	# Use orderer's MSP for fetching system channel config block
+	CORE_PEER_LOCALMSPID="{{ o.mspid }}"
+	CORE_PEER_TLS_ROOTCERT_FILE=$ORDERER_CA
+	CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/{{o.domain}}/orderers/orderer1.{{org.title}}.{{org.domain}}/msp
+
+	local rc=1
+	local starttime=$(date +%s)
+
+	# continue to poll
+	# we either get a successful response, or reach TIMEOUT
+	while test "$(($(date +%s)-starttime))" -lt "$TIMEOUT" -a $rc -ne 0
+	do
+		 sleep 3
+		 echo "Attempting to fetch system channel '$ORDERER_SYSCHAN_ID' ...$(($(date +%s)-starttime)) secs"
+		 if [ -z "$CORE_PEER_TLS_ENABLED" -o "$CORE_PEER_TLS_ENABLED" = "false" ]; then
+			 peer channel fetch 0 -o orderer1.{{org.title}}.{{org.domain}}:7050 -c "$ORDERER_SYSCHAN_ID" >&log.txt
+		 else
+			 peer channel fetch 0 0_block.pb -o orderer1.{{org.title}}.{{org.domain}}:7050 -c "$ORDERER_SYSCHAN_ID" --tls --cafile $ORDERER_CA >&log.txt
+		 fi
+		 test $? -eq 0 && VALUE=$(cat log.txt | awk '/Received block/ {print $NF}')
+		 test "$VALUE" = "0" && let rc=0
+	done
+	cat log.txt
+	echo "===================== Ordering Service is up and running ===================== "
+	echo
+}
+
+setGlobals () {
+	PEER=$1
+
+	CORE_PEER_LOCALMSPID="{{org.mspid}}"
+	CORE_PEER_TLS_ROOTCERT_FILE=$PEER0_ORG_CA
+	CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/{{org.title}}.{{org.domain}}/users/Admin@{{org.title}}.{{org.domain}}/msp
+	CORE_PEER_ADDRESS=peer$PEER.{{org.title}}.{{org.domain}}:7051
+
+	env |grep CORE
+}
+
+
+installChaincode () {
+	PEER=$1
+	setGlobals $PEER
+	peer chaincode install -n mycc -v 1.0 -p github.com/hyperledger/fabric/examples/chaincode/go/example02/cmd >&log.txt
+	res=$?
+	cat log.txt
+	echo "===================== Chaincode is installed on peer${PEER} ===================== "
+	echo
+}
+
+instantiateChaincode () {
+	PEER=$1
+	ORG=$2
+	setGlobals $PEER $ORG
+	# while 'peer chaincode' command can get the orderer endpoint from the peer (if join was successful),
+	# lets supply it directly as we know it using the "-o" option
+	if [ -z "$CORE_PEER_TLS_ENABLED" -o "$CORE_PEER_TLS_ENABLED" = "false" ]; then
+		peer chaincode instantiate -o orderer.example.com:7050 -C $CHANNEL_NAME -n mycc -v 1.0 -c '{"Args":["init","a","100","b","200"]}' -P "AND ('Org1MSP.peer','Org2MSP.peer')" >&log.txt
+	else
+		peer chaincode instantiate -o orderer.example.com:7050 --tls --cafile $ORDERER_CA -C $CHANNEL_NAME -n mycc -v 1.0 -c '{"Args":["init","a","100","b","200"]}' -P "AND ('Org1MSP.peer','Org2MSP.peer')" >&log.txt
+	fi
+	res=$?
+	cat log.txt
+	verifyResult $res "Chaincode instantiation on peer${PEER}.org${ORG} on channel '$CHANNEL_NAME' failed"
+	echo "===================== Chaincode is instantiated on peer${PEER}.org${ORG} on channel '$CHANNEL_NAME' ===================== "
+	echo
+}
+
+chaincodeQuery () {
+	PEER=$1
+	ORG=$2
+	setGlobals $PEER $ORG
+	EXPECTED_RESULT=$3
+	echo "===================== Querying on peer${PEER}.org${ORG} on channel '$CHANNEL_NAME'... ===================== "
+	local rc=1
+	local starttime=$(date +%s)
+
+	# continue to poll
+	# we either get a successful response, or reach TIMEOUT
+	while test "$(($(date +%s)-starttime))" -lt "$TIMEOUT" -a $rc -ne 0
+	do
+        	sleep 3
+        	echo "Attempting to Query peer${PEER}.org${ORG} ...$(($(date +%s)-starttime)) secs"
+        	peer chaincode query -C $CHANNEL_NAME -n mycc -c '{"Args":["query","a"]}' >&log.txt
+        	test $? -eq 0 && VALUE=$(cat log.txt | egrep '^[0-9]+$')
+        	test "$VALUE" = "$EXPECTED_RESULT" && let rc=0
+	done
+	echo
+	cat log.txt
+	if test $rc -eq 0 ; then
+		echo "===================== Query successful on peer${PEER}.org${ORG} on channel '$CHANNEL_NAME' ===================== "
+    	else
+		echo "!!!!!!!!!!!!!!! Query result on peer${PEER}.org${ORG} is INVALID !!!!!!!!!!!!!!!!"
+        	echo "================== ERROR !!! FAILED to execute End-2-End Scenario =================="
+		echo
+		exit 1
+    	fi
+}
+
+# parsePeerConnectionParameters $@
+# Helper function that takes the parameters from a chaincode operation
+# (e.g. invoke, query, instantiate) and checks for an even number of
+# peers and associated org, then sets $PEER_CONN_PARMS and $PEERS
+parsePeerConnectionParameters() {
+	# check for uneven number of peer and org parameters
+	if [ $(( $# % 2 )) -ne 0 ]; then
+        	exit 1
+	fi
+
+	PEER_CONN_PARMS=""
+	PEERS=""
+	while [ "$#" -gt 0 ]; do
+		PEER="peer$1.org$2"
+		PEERS="$PEERS $PEER"
+		PEER_CONN_PARMS="$PEER_CONN_PARMS --peerAddresses $PEER.example.com:7051"
+		if [ -z "$CORE_PEER_TLS_ENABLED" -o "$CORE_PEER_TLS_ENABLED" = "true" ]; then
+        		TLSINFO=$(eval echo "--tlsRootCertFiles \$PEER$1_ORG$2_CA")
+        		PEER_CONN_PARMS="$PEER_CONN_PARMS $TLSINFO"
+        	fi
+		# shift by two to get the next pair of peer/org parameters
+        	shift; shift
+	done
+	# remove leading space for output
+	PEERS="$(echo -e "$PEERS" | sed -e 's/^[[:space:]]*//')"
+}
+
+# chaincodeInvoke <peer> <org> ...
+# Accepts as many peer/org pairs as desired and requests endorsement from each
+chaincodeInvoke () {
+	parsePeerConnectionParameters $@
+	res=$?
+	verifyResult $res "Invoke transaction failed on channel '$CHANNEL_NAME' due to uneven number of peer and org parameters "
+
+	# while 'peer chaincode' command can get the orderer endpoint from the
+	# peer (if join was successful), let's supply it directly as we know
+	# it using the "-o" option
+	if [ -z "$CORE_PEER_TLS_ENABLED" -o "$CORE_PEER_TLS_ENABLED" = "false" ]; then
+		peer chaincode invoke -o orderer.example.com:7050 -C $CHANNEL_NAME -n mycc $PEER_CONN_PARMS -c '{"Args":["invoke","a","b","10"]}' >&log.txt
+	else
+        peer chaincode invoke -o orderer.example.com:7050  --tls --cafile $ORDERER_CA -C $CHANNEL_NAME -n mycc $PEER_CONN_PARMS -c '{"Args":["invoke","a","b","10"]}' >&log.txt
+	fi
+	res=$?
+	cat log.txt
+	verifyResult $res "Invoke execution on PEER$PEER failed "
+	echo "===================== Invoke transaction successful on $PEERS on channel '$CHANNEL_NAME' ===================== "
+	echo
+}

@@ -10,3 +10,4 @@
 
 def create_channel():
     bash = "peer channel create -o orderer.example.com:7050 -c $CHANNEL_NAME -f ./channel-artifacts/channel.tx"
+

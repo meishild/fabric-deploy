@@ -60,6 +60,7 @@ org_config_list = [
             },
             'anchor_peers': [
                 {
+                    'ip': '192.168.12.76',
                     'host': 'peer0.org1.icdoit.com',
                     'port': 7051
                 }
@@ -84,6 +85,7 @@ org_config_list = [
             },
             'anchor_peers': [
                 {
+                    'ip': '192.168.12.78',
                     'host': 'peer0.org2.test.com',
                     'port': 7051
                 }
@@ -309,24 +311,38 @@ def build_peer_config(org):
         folder = deploy_path + "/%s/%s" % (org['title'], peer['ip'])
         __save_file(folder, "docker-compose-peer.yaml", result)
 
-        result = env.get_template('docker-compose-cli.yaml.tmpl').render(
-            p=peer,
-            orderer_hosts=__get_orderer_hosts(),
-            peer_hosts=["%(name)s:%(ip)s" % peer for peer in peer_list],
-            couchdb_hosts=["%(name)s:%(ip)s" % peer['db'] for peer in peer_list],
-        )
+        if peer['ip'] == org['peer']['anchor_peers'][0]['ip']:
+            result = env.get_template('docker-compose-cli.yaml.tmpl').render(
+                p=peer,
+                org=org,
+                orderer_hosts=__get_orderer_hosts(),
+                peer_hosts=["%(name)s:%(ip)s" % peer for peer in peer_list],
+                couchdb_hosts=["%(name)s:%(ip)s" % peer['db'] for peer in peer_list],
+            )
 
-        folder = deploy_path + "/%s/%s" % (org['title'], peer['ip'])
-        __save_file(folder, "docker-compose-cli.yaml", result)
+            folder = deploy_path + "/%s/%s" % (org['title'], peer['ip'])
+            __save_file(folder, "docker-compose-cli.yaml", result)
 
-        peer_bash = b_env.get_template('peer.sh.tmpl').render(p=peer)
-        __save_file(folder + "/scripts", "peer.sh", peer_bash)
+            peer_bash = b_env.get_template('peer.sh.tmpl').render(p=peer)
+            __save_file(folder + "/scripts", "peer.sh", peer_bash)
 
-        peer_bash = b_env.get_template('initPeer.sh.tmpl').render(
-            p=peer,
-            volume="%s/couchdb/couchdb%d" % (volumes_path, peer['id'])
-        )
-        __save_file(folder + "/scripts", "initPeer.sh", peer_bash)
+            peer_bash = b_env.get_template('initPeer.sh.tmpl').render(
+                p=peer,
+                volume="%s/couchdb/couchdb%d" % (volumes_path, peer['id'])
+            )
+            __save_file(folder + "/scripts", "initPeer.sh", peer_bash)
+
+            peer_bash = b_env.get_template('channel.sh.tmpl').render(
+                o=orderer_config,
+                org=org,
+            )
+            __save_file(folder + "/scripts", "channel.sh", peer_bash)
+
+            peer_bash = b_env.get_template('chaincode.sh.tmpl').render(
+                o=orderer_config,
+                org=org,
+            )
+            __save_file(folder + "/scripts", "chaincode.sh", peer_bash)
 
 
 def build_crypto_config():
@@ -391,7 +407,10 @@ def deploy():
 
     for org in org_config_list:
         for folder in os.listdir(deploy_path + org['title']):
-            __copy(deploy_path + org['title'] + "/" + folder)
+            to = deploy_path + org['title'] + "/" + folder
+            __copy(to)
+            if folder == org['peer']['anchor_peers'][0]['ip']:
+                shutil.copytree(path + "/templates/chaincode/", to + "/chaincode")
 
     for folder in os.listdir(deploy_path + "orderer"):
         __copy(deploy_path + "/orderer/" + folder)
