@@ -4,4 +4,6 @@ rm -fr {{volume}}
 mkdir -p {{volume}}
 chown {{p.db.port}}:{{p.db.port}} {{volume}}
 
+docker network create {{ p.network }}
+
 echo "INIT FINISH"
