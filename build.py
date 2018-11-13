@@ -31,7 +31,7 @@ orderer_config = {
     'name': 'Orderer',
     'mspid': 'OrdererMSP',
     'domain': 'shuwen.com',
-    'ips': ['192.168.12.74', '192.168.12.75'],
+    'ips': ['192.168.12.74'],
     'ports': [7050],
     'hosts': ['orderer1', 'orderer2'],
     'zookeeper': {
@@ -51,7 +51,7 @@ org_config_list = [
         'domain': 'icdoit.com',
         'mspid': 'Org1MSP',
         'peer': {
-            'ips': ['192.168.12.76', '192.168.12.77'],
+            'ips': ['192.168.12.76'],
             'ports': [7051, 7052, 7053],
             'db': {
                 "port": 5984,
@@ -312,27 +312,26 @@ def build_peer_config(org):
         folder = deploy_path + "/%s/%s" % (org['title'], peer['ip'])
         __save_file(folder, "docker-compose-peer.yaml", result)
 
-        if peer['ip'] == org['peer']['anchor_peers'][0]['ip']:
-            peer_bash = b_env.get_template('peer.sh.tmpl').render(p=peer)
-            __save_file(folder + "/scripts", "peer.sh", peer_bash)
+        peer_bash = b_env.get_template('peer.sh.tmpl').render(p=peer)
 
-            peer_bash = b_env.get_template('initPeer.sh.tmpl').render(
-                p=peer,
-                volume="%s/couchdb/couchdb%d" % (volumes_path, peer['id'])
-            )
-            __save_file(folder + "/scripts", "initPeer.sh", peer_bash)
+        __save_file(folder + "/scripts", "peer.sh", peer_bash)
+        peer_bash = b_env.get_template('initPeer.sh.tmpl').render(
+            p=peer,
+            volume="%s/couchdb/couchdb%d" % (volumes_path, peer['id'])
+        )
+        __save_file(folder + "/scripts", "initPeer.sh", peer_bash)
 
-            peer_bash = b_env.get_template('channel.sh.tmpl').render(
-                o=orderer_config,
-                org=org,
-            )
-            __save_file(folder + "/scripts", "channel.sh", peer_bash)
+        peer_bash = b_env.get_template('channel.sh.tmpl').render(
+            o=orderer_config,
+            org=org,
+        )
+        __save_file(folder + "/scripts", "channel.sh", peer_bash)
 
-            peer_bash = b_env.get_template('chaincode.sh.tmpl').render(
-                o=orderer_config,
-                org=org,
-            )
-            __save_file(folder + "/scripts", "chaincode.sh", peer_bash)
+        peer_bash = b_env.get_template('chaincode.sh.tmpl').render(
+            o=orderer_config,
+            org=org,
+        )
+        __save_file(folder + "/scripts", "chaincode.sh", peer_bash)
 
 
 def build_crypto_config():

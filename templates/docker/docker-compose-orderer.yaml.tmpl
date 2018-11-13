@@ -8,7 +8,7 @@ services:
     image: hyperledger/fabric-orderer
     container_name: {{ o.name }}
     environment:
-      - ORDERER_GENERAL_LOGLEVEL=debug
+      - ORDERER_GENERAL_LOGLEVEL=INFO
       - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
       - ORDERER_GENERAL_LISTENPORT={{ o.port }}
       - ORDERER_GENERAL_GENESISMETHOD=file

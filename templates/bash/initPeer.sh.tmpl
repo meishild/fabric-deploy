@@ -1,7 +1,7 @@
 #!/bin/bash
 
 rm -fr {{volume}}
-mkdir {{volume}}
+mkdir -p {{volume}}
 chown {{p.db.port}}:{{p.db.port}} {{volume}}
 
 echo "INIT FINISH"
