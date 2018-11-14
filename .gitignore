@@ -34,4 +34,4 @@ classes/
 *.class
 *.ipr
 *.iws
-deploy/*
+machine/*

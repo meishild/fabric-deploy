@@ -14,7 +14,7 @@ OrdererOrgs:
         Province: California
         Locality: San Francisco
 
-    Specs:{% for host in orderer.hosts %}
+    Specs:{% for host in orderer.orderer_address %}
         - Hostname: {{host}}{% endfor %}
 
 # ---------------------------------------------------------------------------

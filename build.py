@@ -12,145 +12,17 @@ import platform
 import shutil
 
 from jinja2 import Environment, PackageLoader
+from config import *
 
 path = os.path.dirname(os.path.realpath(__file__))
 deploy_path = path + "/deploy/"
+machine_path = path + "/machine/"
 
 env = Environment(loader=PackageLoader('templates', 'docker'))
 f_env = Environment(loader=PackageLoader('templates', 'fabric'))
 b_env = Environment(loader=PackageLoader('templates', 'bash'))
 
-"""
-部署要求：同一台机器内不能部署两个机构数据
-"""
-
-volumes_path = "/opt/chainData"
-
-orderer_config = {
-    'title': 'orderer',
-    'name': 'Orderer',
-    'mspid': 'OrdererMSP',
-    'domain': 'shuwen.com',
-    'ips': ['192.168.12.74'],
-    'ports': [7050],
-    'hosts': ['orderer1'],
-    'zookeeper': {
-        'ips': ['192.168.12.74', '192.168.12.75', '192.168.12.76'],
-        'ports': [2181, 2888, 3888]
-    },
-    'kafka': {
-        'ips': ['192.168.12.74', '192.168.12.75', '192.168.12.76', '192.168.12.77'],
-        'ports': [9092]
-    },
-}
-
-org_config_list = [
-    {
-        'title': 'org1',
-        'name': 'Org1',
-        'domain': 'icdoit.com',
-        'mspid': 'Org1MSP',
-        'peer': {
-            'ips': ['192.168.12.76'],
-            'ports': [7051, 7052, 7053],
-            'db': {
-                "port": 5984,
-                "user": "couchdb",
-                "password": "couchdb",
-            },
-            'anchor_peers': [
-                {
-                    'ip': '192.168.12.76',
-                    'host': 'peer0.org1.icdoit.com',
-                    'port': 7051
-                }
-            ]
-        },
-        'ca': {
-
-        }
-    },
-    {
-        'title': 'org2',
-        'name': 'Org2',
-        'domain': 'test.com',
-        'mspid': 'Org2MSP',
-        'peer': {
-            'ips': ['192.168.12.78'],
-            'ports': [7051, 7052, 7053],
-            'db': {
-                "port": 5984,
-                "user": "couchdb",
-                "password": "couchdb",
-            },
-            'anchor_peers': [
-                {
-                    'ip': '192.168.12.78',
-                    'host': 'peer0.org2.test.com',
-                    'port': 7051
-                }
-            ]
-        }
-    }
-]
-
-
-def __get_zk_hosts():
-    zk_org = orderer_config['zookeeper']
-
-    zk_hosts = []
-    for i in range(0, len(zk_org['ips'])):
-        zk_hosts.append(
-            "z%d:%s" % (i + 1, zk_org['ips'][i])
-        )
-
-    return zk_hosts
-
-
-def __get_kafka_hosts():
-    k_org = orderer_config['kafka']
-
-    k_hosts = []
-    for i in range(0, len(k_org['ips'])):
-        k_hosts.append(
-            "k%d:%s" % (i + 1, k_org['ips'][i])
-        )
-
-    return k_hosts
-
-
-def __get_kafka_ports():
-    k_org = orderer_config['kafka']
-
-    k_ports = []
-    for i in range(0, len(k_org['ips'])):
-        k_ports.append(
-            "k%d:%s" % (i + 1, k_org['ports'][0])
-        )
-
-    return k_ports
-
-
-def __get_orderer_hosts():
-    orderer_hosts = []
-    for i in range(0, len(orderer_config['ips'])):
-        name = "orderer%d.%s" % (i + 1, orderer_config['domain'])
-        orderer_hosts.append(
-            "%s:%s" % (name, orderer_config['ips'][i])
-        )
-
-    return orderer_hosts
-
-
-def __get_orderer_addresses():
-    orderer_hosts = []
-    for i in range(0, len(orderer_config['ips'])):
-        name = "orderer%d.%s" % (i + 1, orderer_config['domain'])
-        orderer_hosts.append(
-            "%s:%s" % (name, orderer_config['ports'][0])
-        )
-
-    return orderer_hosts
+orderer_config = {}
 
 
 def __save_file(folder, name, content):
@@ -162,8 +34,51 @@ def __save_file(folder, name, content):
     f.close()
 
 
-def build_zk_kafka_config():
-    zk_org = orderer_config['zookeeper']
+def __init_orderer_config(orderer_cfg):
+    """
+    :param orderer_cfg:
+
+    'title': 'orderer',
+    'name': 'Orderer',
+    'mspid': 'OrdererMSP',
+    'domain': 'shuwen.com',
+    'ips': ['192.168.12.74', '192.168.12.75'],
+    'ports': [7050],
+    'type': 'kafka',
+    'zookeeper': {
+        'ips': ['192.168.12.74', '192.168.12.75', '192.168.12.76'],
+        'ports': [2181, 2888, 3888]
+    },
+    'kafka': {
+        'ips': ['192.168.12.74', '192.168.12.75', '192.168.12.76', '192.168.12.77'],
+        'ports': [9092]
+    },
+
+    :return:
+    """
+    orderer_list = []
+    domain = orderer_cfg['domain']
+    for i in range(0, len(orderer_cfg['ips'])):
+        id = i + 1
+        orderer_list.append({
+            "id": id,
+            "domain": domain,
+            "name": "orderer%d.%s" % (id, domain),
+            "ip": orderer_cfg['ips'][i],
+            'port': orderer_cfg['ports'][0],
+            'mspid': orderer_cfg['mspid'],
+            'ports': ['%s:%s' % (port, port) for port in orderer_cfg['ports']],
+            'volumes': [
+                '%s/orderer/orderer%d/:/var/hyperledger/production/' % (volumes_path, id),
+                './channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block',
+                './crypto-config/ordererOrganizations/%s/orderers/orderer%d.%s/msp:/var/hyperledger/orderer/msp' % (
+                    domain, id, domain),
+                './crypto-config/ordererOrganizations/%s/orderers/orderer%i.%s/tls:/var/hyperledger/orderer/tls' % (
+                    domain, id, domain),
+            ]
+        })
+
+    zk_org = orderer_cfg['zookeeper']
     zookeeper_list = []
     for i in range(0, len(zk_org['ips'])):
         id = i + 1
@@ -180,19 +95,8 @@ def build_zk_kafka_config():
             }
         )
 
-    tmpl = env.get_template('docker-zk.yaml.tmpl')
-
-    for zk in zookeeper_list:
-        result = tmpl.render(
-            zk=zk,
-            zoo_servers=" ".join(["server.%(id)d=%(name)s:%(port1)d:%(port2)d" % zk for zk in zookeeper_list]),
-            zk_hosts=__get_zk_hosts()
-        )
-        folder = deploy_path + "/%s/%s" % (orderer_config['title'], zk['ip'])
-        __save_file(folder, "docker-zk.yaml", result)
-
     kafka_list = []
-    k_org = orderer_config['kafka']
+    k_org = orderer_cfg['kafka']
     for i in range(0, len(k_org['ips'])):
         id = i + 1
         kafka_list.append(
@@ -206,140 +110,199 @@ def build_zk_kafka_config():
             }
         )
 
-    tmpl = env.get_template('docker-kafka.yaml.tmpl')
+    """
+    按照name:ip方式生成zkhost结构
+    z1:10.0.0.x
+    k1:10.0.0.x
+    orderer1:10.0.0.x
+    """
+    zk_hosts = []
+    for i in range(0, len(orderer_cfg['zookeeper']['ips'])):
+        zk_hosts.append("z%d:%s" % (i + 1, orderer_cfg['zookeeper']['ips'][i]))
 
-    for k in kafka_list:
-        result = tmpl.render(
-            k=k,
-            zoo_servers=",".join(["%(name)s:%(port0)d" % zk for zk in zookeeper_list]),
-            zk_hosts=__get_zk_hosts(),
-            kafka_hosts=__get_kafka_hosts()
-        )
-        folder = deploy_path + "/%s/%s" % (orderer_config['title'], k['ip'])
-        __save_file(folder, "docker-kafka.yaml", result)
+    k_hosts = []
+    k_ports = []
+    for i in range(0, len(orderer_cfg['kafka']['ips'])):
+        k_hosts.append("k%d:%s" % (i + 1, orderer_cfg['kafka']['ips'][i]))
+        k_ports.append("k%d:%s" % (i + 1, orderer_cfg['kafka']['ports'][0]))
+
+    orderer_hosts = []
+    orderer_ports = []
+    orderer_address = []
+    for i in range(0, len(orderer_cfg['ips'])):
+        orderer_hosts.append("orderer%d.%s:%s" % (i + 1, domain, orderer_cfg['ips'][i]))
+        orderer_ports.append("orderer%d.%s:%s" % (i + 1, domain, orderer_cfg['ports'][0]))
+        orderer_address.append("orderer%d.%s" % (i + 1, domain))
+
+    global orderer_config
+    orderer_config = {
+        'orderer': {
+            'list': orderer_list,
+            'orderer_hosts': orderer_hosts,
+            'orderer_ports': orderer_ports,
+            'orderer_address': orderer_address,
+            'name': orderer_cfg['name'],
+            'mspid': orderer_cfg['mspid'],
+            'domain': orderer_cfg['domain'],
+        },
+        'zookeeper': {
+            'list': zookeeper_list,
+            'zk_hosts': zk_hosts,
+            'ips': orderer_cfg['zookeeper']['ips'],
+            'ports': orderer_cfg['zookeeper']['ports'],
+        },
+        'kafka': {
+            'list': kafka_list,
+            'kafka_hosts': k_hosts,
+            'kafka_ports': k_ports,
+            'ips': orderer_cfg['kafka']['ips'],
+            'ports': orderer_cfg['kafka']['ports'],
+        }
+    }
 
 
 def build_orderer_config():
-    build_zk_kafka_config()
+    tmpl = env.get_template('docker-zk.yaml.tmpl')
 
-    orderer_list = []
+    zookeeper_list = orderer_config['zookeeper']['list']
+    for zk in zookeeper_list:
+        result = tmpl.render(
+            zk=zk,
+            zoo_servers=" ".join(["server.%(id)d=%(name)s:%(port1)d:%(port2)d" % zk for zk in zookeeper_list]),
+            zk_hosts=orderer_config['zookeeper']['zk_hosts']
+        )
+        folder = machine_path + "/orderer/%s" % zk['ip']
+        __save_file(folder, "docker-zk.yaml", result)
 
-    domain = orderer_config['domain']
-    for i in range(0, len(orderer_config['ips'])):
-        id = i + 1
-        orderer_list.append({
-            "id": id,
-            "domain": domain,
-            "name": "orderer%d.%s" % (id, domain),
-            "ip": orderer_config['ips'][i],
-            'port': orderer_config['ports'][0],
-            'mspid': orderer_config['mspid'],
-            'ports': ['%s:%s' % (port, port) for port in orderer_config['ports']],
-            'volumes': [
-                '%s/orderer/orderer%d/:/var/hyperledger/production/' % (volumes_path, id),
-                './channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block',
-                './crypto-config/ordererOrganizations/%s/orderers/orderer%d.%s/msp:/var/hyperledger/orderer/msp' % (
-                    domain, id, domain),
-                './crypto-config/ordererOrganizations/%s/orderers/orderer%i.%s/tls:/var/hyperledger/orderer/tls' % (
-                    domain, id, domain),
-            ]
-        })
+    tmpl = env.get_template('docker-kafka.yaml.tmpl')
+
+    for k in orderer_config['kafka']['list']:
+        result = tmpl.render(
+            k=k,
+            zoo_servers=",".join(["%(name)s:%(port0)d" % zk for zk in zookeeper_list]),
+            zk_hosts=orderer_config['zookeeper']['zk_hosts'],
+            kafka_hosts=orderer_config['kafka']['kafka_hosts']
+        )
+        folder = machine_path + "/orderer/%s" % k['ip']
+        __save_file(folder, "docker-kafka.yaml", result)
 
     tmpl = env.get_template('docker-compose-orderer.yaml.tmpl')
 
+    orderer_list = orderer_config['orderer']['list']
     for orderer in orderer_list:
         result = tmpl.render(
             o=orderer,
-            orderer_hosts=["%(name)s:%(ip)s" % orderer for orderer in orderer_list],
-            zk_hosts=__get_zk_hosts(),
-            kafka_hosts=__get_kafka_hosts(),
-            kafka_ports=",".join(__get_kafka_ports())
+            orderer_hosts=orderer_config['orderer']['orderer_hosts'],
+            zk_hosts=orderer_config['zookeeper']['zk_hosts'],
+            kafka_hosts=orderer_config['kafka']['kafka_hosts'],
+            kafka_ports=",".join(orderer_config['kafka']['kafka_ports'])
         )
-        folder = deploy_path + "/%s/%s" % (orderer_config['title'], orderer['ip'])
+        folder = machine_path + "/orderer/%s" % orderer['ip']
         __save_file(folder, "docker-compose-orderer.yaml", result)
 
 
-def build_peer_config(org):
-    peer_list = []
+org_peer_list = []
 
-    domain = "%s.%s" % (org['title'], org['domain'])
-    peer_org = org['peer']
 
-    for i in range(0, len(org['peer']['ips'])):
-        id = i
-        peer_list.append(
-            {
-                "id": id,
-                "domain": domain,
-                "name": "peer%d.%s" % (id, domain),
-                "port0": peer_org['ports'][0],
-                "port1": peer_org['ports'][1],
-                "ip": peer_org['ips'][i],
-                'network': 'net',
-                'mspid': org['mspid'],
-                'ports': ['%s:%s' % (port, port) for port in peer_org['ports']],
-                'volumes': [
-                    '/var/run/:/host/var/run/',
-                    '%s/peer/peer%d:/var/hyperledger/production' % (volumes_path, id),
-                    './crypto-config/peerOrganizations/%s/peers/peer%d.%s/msp:/etc/hyperledger/fabric/msp' % (
-                        domain, id, domain),
-                    './crypto-config/peerOrganizations/%s/peers/peer%d.%s/tls:/etc/hyperledger/fabric/tls' % (
-                        domain, id, domain),
-                ],
-                "db": {
-                    "id": id,
-                    "name": "couchdb%d.%s" % (id, domain),
-                    "ip": peer_org['ips'][i],
-                    "port": peer_org['db']['port'],
-                    "user": peer_org['db']['user'],
-                    "password": peer_org['db']['password'],
-                    'volumes': [
-                        '%s/couchdb/couchdb%d:/opt/couchdb/data' % (volumes_path, id),
-                    ]
+def __init_peer_config(peer_cfg_list):
+    global org_peer_list
+    for peer_org in peer_cfg_list:
+        """
+        'title': 'org1',
+        'name': 'Org1',
+        'domain': 'icdoit.com',
+        'mspid': 'Org1MSP',
+        'peer': {
+            'ips': ['192.168.12.76', '192.168.12.77'],
+            'ports': [7051, 7052, 7053],
+            'db': {
+                "port": 5984,
+                "user": "couchdb",
+                "password": "couchdb",
+            },
+            'anchor_peers': [
+                {
+                    'ip': '192.168.12.76',
+                    'host': 'peer0.org1.icdoit.com',
+                    'port': 7051
                 }
-            }
-        )
+            ]
+        },
+        """
 
-    for peer in peer_list:
-        result = env.get_template('docker-compose-peer.yaml.tmpl').render(
-            p=peer,
-            orderer_hosts=__get_orderer_hosts(),
-            peer_hosts=["%(name)s:%(ip)s" % peer for peer in peer_list],
-            couchdb_hosts=["%(name)s:%(ip)s" % peer['db'] for peer in peer_list],
-            org=org
-        )
+        domain = "%s.%s" % (peer_org['title'], peer_org['domain'])
+        peers = peer_org['peers']
+        peer_list = []
+        for i in range(0, len(peer_org['peers']['ips'])):
+            id = i
+            peer_list.append(
+                {
+                    "id": id,
+                    "domain": domain,
+                    "name": "peer%d.%s" % (id, domain),
+                    "port0": peers['ports'][0],
+                    "port1": peers['ports'][1],
+                    "ip": peers['ips'][i],
+                    'network': 'net',
+                    'mspid': peer_org['mspid'],
+                    'ports': ['%s:%s' % (port, port) for port in peers['ports']],
+                    'volumes': [
+                        '/var/run/:/host/var/run/',
+                        '%s/peer/peer%d:/var/hyperledger/production' % (volumes_path, id),
+                        './crypto-config/peerOrganizations/%s/peers/peer%d.%s/msp:/etc/hyperledger/fabric/msp' % (
+                            domain, id, domain),
+                        './crypto-config/peerOrganizations/%s/peers/peer%d.%s/tls:/etc/hyperledger/fabric/tls' % (
+                            domain, id, domain),
+                    ],
+                    "db": {
+                        "id": id,
+                        "name": "couchdb%d.%s" % (id, domain),
+                        "ip": peers['ips'][i],
+                        "port": peers['db']['port'],
+                        "user": peers['db']['user'],
+                        "password": peers['db']['password'],
+                        'volumes': [
+                            '%s/couchdb/couchdb%d:/opt/couchdb/data' % (volumes_path, id),
+                        ]
+                    }
+                }
+            )
+        org_peer_list.append({
+            'list': peer_list,
+            'title': peer_org['title'],
+            'name': peer_org['name'],
+            'domain': peer_org['domain'],
+            'mspid': peer_org['mspid'],
+            'anchor_peers': peers['anchor_peers'],
+        })
 
-        folder = deploy_path + "/%s/%s" % (org['title'], peer['ip'])
-        __save_file(folder, "docker-compose-peer.yaml", result)
 
-        peer_bash = b_env.get_template('peer.sh.tmpl').render(p=peer)
+def build_peer_config():
+    for org_peer in org_peer_list:
+        for peer in org_peer['list']:
+            result = env.get_template('docker-compose-peer.yaml.tmpl').render(
+                p=peer,
+                orderer_hosts=orderer_config['orderer']['orderer_hosts'],
+                peer_hosts=["%(name)s:%(ip)s" % peer for peer in org_peer['list']],
+                couchdb_hosts=["%(name)s:%(ip)s" % peer['db'] for peer in org_peer['list']],
+            )
 
-        __save_file(folder + "/scripts", "peer.sh", peer_bash)
-        peer_bash = b_env.get_template('initPeer.sh.tmpl').render(
-            p=peer,
-            volume="%s/couchdb/couchdb%d" % (volumes_path, peer['id'])
-        )
-        __save_file(folder + "/scripts", "initPeer.sh", peer_bash)
+            folder = machine_path + "/%s/%s" % (org_peer['title'], peer['ip'])
+            __save_file(folder, "docker-compose-peer.yaml", result)
 
-        peer_bash = b_env.get_template('channel.sh.tmpl').render(
-            o=orderer_config,
-            org=org,
-        )
-        __save_file(folder + "/scripts", "channel.sh", peer_bash)
-
-        peer_bash = b_env.get_template('chaincode.sh.tmpl').render(
-            o=orderer_config,
-            org=org,
-        )
-        __save_file(folder + "/scripts", "chaincode.sh", peer_bash)
+            peer_bash = b_env.get_template('initPeer.sh.tmpl').render(
+                p=peer,
+                volume="%s/couchdb/couchdb%d" % (volumes_path, peer['id'])
+            )
+            __save_file(folder + "/scripts", "initPeer.sh", peer_bash)
 
 
 def build_crypto_config():
     tmpl = f_env.get_template('crypto-config.yaml.tmpl')
 
     result = tmpl.render(
-        orderer=orderer_config,
-        org_list=org_config_list,
+        orderer=orderer_config['orderer'],
+        org_list=org_peer_list,
     )
     __save_file(deploy_path, "crypto-config.yaml", result)
 
@@ -348,10 +311,10 @@ def build_configtx_config():
     tmpl = f_env.get_template('configtx.yaml.tmpl')
 
     result = tmpl.render(
-        orderer=orderer_config,
-        org_list=org_config_list,
-        orderer_addresses=__get_orderer_addresses(),
-        kafka_brokers=__get_kafka_ports(),
+        orderer=orderer_config['orderer'],
+        org_list=org_peer_list,
+        orderer_addresses=orderer_config['orderer']['orderer_ports'],
+        kafka_brokers=orderer_config['kafka']['kafka_ports'],
     )
     __save_file(deploy_path, "configtx.yaml", result)
 
@@ -360,12 +323,12 @@ def build_generate_bash():
     tmpl = b_env.get_template('generateArtifacts.sh.tmpl')
 
     result = tmpl.render(
-        org_list=org_config_list,
+        org_list=org_peer_list,
     )
     __save_file(deploy_path, "generateArtifacts.sh", result)
 
 
-def deploy():
+def generate_artifacts_and_crypto():
     if os.path.isdir(deploy_path):
         shutil.rmtree(deploy_path)
         os.makedirs(deploy_path)
@@ -375,36 +338,41 @@ def deploy():
         if not os.path.isdir(folder):
             os.makedirs(folder)
 
-    for org in org_config_list:
-        build_peer_config(org)
-
-    build_orderer_config()
+    print("#########  init config ##############\n")
+    __init_orderer_config(orderer_tmpl_config)
+    __init_peer_config(peer_tmpl_list)
     build_crypto_config()
     build_configtx_config()
     build_generate_bash()
-
-    print("#########  generateArtifacts ##############\n")
+    print("#########  generate artifacts ##############\n")
     if platform.platform().split("-")[0] == "Darwin":
         shutil.copytree(path + "/templates/bin/Darwin", deploy_path + "bin")
     else:
         shutil.copytree(path + "/templates/bin/linux", deploy_path + "bin")
 
-    os.system("cd deploy && sh generateArtifacts.sh")
+    os.system("cd %s && sh generateArtifacts.sh" % deploy_path)
 
-    print("#########  Copy File ##############\n")
+
+def generate_machine():
+    if os.path.isdir(machine_path):
+        shutil.rmtree(machine_path)
+        os.makedirs(machine_path)
+
+    print("#########  build config ##############\n")
+    build_orderer_config()
+    build_peer_config()
+    print("#########  copy File ##############\n")
+
     # 复制生成好的crypto-config和channel-artifacts
-
-    for org in org_config_list:
-        for folder in os.listdir(deploy_path + org['title']):
-            to = deploy_path + org['title'] + "/" + folder
+    for org in org_peer_list:
+        for folder in os.listdir(machine_path + org['title']):
+            to = machine_path + org['title'] + "/" + folder
             __copy(to)
-            if folder == org['peer']['anchor_peers'][0]['ip']:
+            if folder == org['anchor_peers'][0]['ip']:
                 shutil.copytree(path + "/templates/chaincode/", to + "/chaincode")
 
-    for folder in os.listdir(deploy_path + "orderer"):
-        __copy(deploy_path + "/orderer/" + folder)
-
-    print("#########  Copy Finish ##############\n")
+    for folder in os.listdir(machine_path + "orderer"):
+        __copy(machine_path + "/orderer/" + folder)
 
 
 def __copy(to):
@@ -413,10 +381,10 @@ def __copy(to):
     shutil.copy(deploy_path + "crypto-config.yaml", "%s" % to)
     shutil.copy(deploy_path + "configtx.yaml", "%s" % to)
 
-    if platform.platform().split("-")[0] == "Darwin":
-        shutil.copytree(path + "/templates/bin/Darwin", "%s/bin/" % to)
-    else:
-        shutil.copytree(path + "/templates/bin/linux", "%s/bin/" % to)
+
+def deploy():
+    generate_artifacts_and_crypto()
+    generate_machine()
 
 
 deploy()
