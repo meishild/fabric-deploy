@@ -10,6 +10,7 @@
 import os
 import platform
 import shutil
+import sys
 
 from jinja2 import Environment, PackageLoader
 from config import *
@@ -329,6 +330,8 @@ def build_generate_bash():
 
 
 def generate_artifacts_and_crypto():
+    print("#########  generate artifacts and crypto config ##############\n")
+
     if os.path.isdir(deploy_path):
         shutil.rmtree(deploy_path)
         os.makedirs(deploy_path)
@@ -338,9 +341,6 @@ def generate_artifacts_and_crypto():
         if not os.path.isdir(folder):
             os.makedirs(folder)
 
-    print("#########  init config ##############\n")
-    __init_orderer_config(orderer_tmpl_config)
-    __init_peer_config(peer_tmpl_list)
     build_crypto_config()
     build_configtx_config()
     build_generate_bash()
@@ -351,17 +351,18 @@ def generate_artifacts_and_crypto():
         shutil.copytree(path + "/templates/bin/linux", deploy_path + "bin")
 
     os.system("cd %s && sh generateArtifacts.sh" % deploy_path)
+    print("#########  finish generate artifacts and crypto config ##############\n")
 
 
 def generate_machine():
+    print("#########  generate machine config ##############\n")
     if os.path.isdir(machine_path):
         shutil.rmtree(machine_path)
         os.makedirs(machine_path)
 
-    print("#########  build config ##############\n")
     build_orderer_config()
     build_peer_config()
-    print("#########  copy File ##############\n")
+    print("#########  copy machine file ##############\n")
 
     # 复制生成好的crypto-config和channel-artifacts
     for org in org_peer_list:
@@ -374,6 +375,8 @@ def generate_machine():
     for folder in os.listdir(machine_path + "orderer"):
         __copy(machine_path + "/orderer/" + folder)
 
+    print("#########  machine finish ##############\n")
+
 
 def __copy(to):
     shutil.copytree(deploy_path + "channel-artifacts", "%s/channel-artifacts" % to)
@@ -382,9 +385,20 @@ def __copy(to):
     shutil.copy(deploy_path + "configtx.yaml", "%s" % to)
 
 
-def deploy():
-    generate_artifacts_and_crypto()
+def deploy(need_generate=False):
+    __init_orderer_config(orderer_tmpl_config)
+    __init_peer_config(peer_tmpl_list)
+    if need_generate:
+        print("NEED GENERATE ARTIFACTS AND CRYPTO!!!!!")
+        generate_artifacts_and_crypto()
+    else:
+        print("DON'T NEED GENERATE ARTIFACTS AND CRYPTO!!!!!")
     generate_machine()
 
 
-deploy()
+if __name__ == '__main__':
+    argv = sys.argv
+    if len(argv) == 2:
+        deploy(argv[1] != "clean")
+    else:
+        deploy(True)
