@@ -36,27 +36,6 @@ def __save_file(folder, name, content):
 
 
 def __init_orderer_config(orderer_cfg):
-    """
-    :param orderer_cfg:
-
-    'title': 'orderer',
-    'name': 'Orderer',
-    'mspid': 'OrdererMSP',
-    'domain': 'shuwen.com',
-    'ips': ['192.168.12.74', '192.168.12.75'],
-    'ports': [7050],
-    'type': 'kafka',
-    'zookeeper': {
-        'ips': ['192.168.12.74', '192.168.12.75', '192.168.12.76'],
-        'ports': [2181, 2888, 3888]
-    },
-    'kafka': {
-        'ips': ['192.168.12.74', '192.168.12.75', '192.168.12.76', '192.168.12.77'],
-        'ports': [9092]
-    },
-
-    :return:
-    """
     orderer_list = []
     domain = orderer_cfg['domain']
     for i in range(0, len(orderer_cfg['ips'])):
@@ -208,66 +187,50 @@ org_peer_list = []
 def __init_peer_config(peer_cfg_list):
     global org_peer_list
     for peer_org in peer_cfg_list:
-        """
-        'title': 'org1',
-        'name': 'Org1',
-        'domain': 'icdoit.com',
-        'mspid': 'Org1MSP',
-        'peer': {
-            'ips': ['192.168.12.76', '192.168.12.77'],
-            'ports': [7051, 7052, 7053],
-            'db': {
-                "port": 5984,
-                "user": "couchdb",
-                "password": "couchdb",
-            },
-            'anchor_peers': [
-                {
-                    'ip': '192.168.12.76',
-                    'host': 'peer0.org1.icdoit.com',
-                    'port': 7051
-                }
-            ]
-        },
-        """
-
         domain = "%s.%s" % (peer_org['title'], peer_org['domain'])
         peers = peer_org['peers']
         peer_list = []
         for i in range(0, len(peer_org['peers']['ips'])):
             id = i
-            peer_list.append(
-                {
+            peer_tmp_dict = {
+                "id": id,
+                "domain": domain,
+                "name": "peer%d.%s" % (id, domain),
+                "port0": peers['ports'][0],
+                "port1": peers['ports'][1],
+                "ip": peers['ips'][i],
+                'network': 'net',
+                'mspid': peer_org['mspid'],
+                'ports': ['%s:%s' % (port, port) for port in peers['ports']],
+                'volumes': [
+                    '/var/run/:/host/var/run/',
+                    '%s/peer/peer%d:/var/hyperledger/production' % (volumes_path, id),
+                    './crypto-config/peerOrganizations/%s/peers/peer%d.%s/msp:/etc/hyperledger/fabric/msp' % (
+                        domain, id, domain),
+                    './crypto-config/peerOrganizations/%s/peers/peer%d.%s/tls:/etc/hyperledger/fabric/tls' % (
+                        domain, id, domain),
+                ],
+            }
+            if 'db' in peers:
+                peer_tmp_dict['db'] = {
                     "id": id,
-                    "domain": domain,
-                    "name": "peer%d.%s" % (id, domain),
-                    "port0": peers['ports'][0],
-                    "port1": peers['ports'][1],
+                    "name": "couchdb%d.%s" % (id, domain),
                     "ip": peers['ips'][i],
-                    'network': 'net',
-                    'mspid': peer_org['mspid'],
-                    'ports': ['%s:%s' % (port, port) for port in peers['ports']],
+                    "port": peers['db']['port'],
+                    "user": peers['db']['user'],
+                    "password": peers['db']['password'],
                     'volumes': [
-                        '/var/run/:/host/var/run/',
-                        '%s/peer/peer%d:/var/hyperledger/production' % (volumes_path, id),
-                        './crypto-config/peerOrganizations/%s/peers/peer%d.%s/msp:/etc/hyperledger/fabric/msp' % (
-                            domain, id, domain),
-                        './crypto-config/peerOrganizations/%s/peers/peer%d.%s/tls:/etc/hyperledger/fabric/tls' % (
-                            domain, id, domain),
-                    ],
-                    "db": {
-                        "id": id,
-                        "name": "couchdb%d.%s" % (id, domain),
-                        "ip": peers['ips'][i],
-                        "port": peers['db']['port'],
-                        "user": peers['db']['user'],
-                        "password": peers['db']['password'],
-                        'volumes': [
-                            '%s/couchdb/couchdb%d:/opt/couchdb/data' % (volumes_path, id),
-                        ]
-                    }
+                        '%s/couchdb/couchdb%d:/opt/couchdb/data' % (volumes_path, id),
+                    ]
                 }
-            )
+            if 'ca' in peer_org:
+                peer_tmp_dict['ca'] = {
+                    'name': "ca.%s" % domain,
+                    'ip': peer_org['ca']['ip'],
+                    'port': peer_org['ca']['port'],
+                    'admin': peer_org['ca']['admin'],
+                }
+            peer_list.append(peer_tmp_dict)
         org_peer_list.append({
             'list': peer_list,
             'title': peer_org['title'],
@@ -296,6 +259,25 @@ def build_peer_config():
                 volume="%s/couchdb/couchdb%d" % (volumes_path, peer['id'])
             )
             __save_file(folder + "/scripts", "initPeer.sh", peer_bash)
+
+
+def build_ca():
+    for peer_org in org_peer_list:
+        for peer in peer_org['list']:
+            if 'ca' not in peer:
+                continue
+            ca = peer['ca'].copy()
+            file_list = os.listdir(deploy_path + "crypto-config/peerOrganizations/" + peer['domain'] + "/ca")
+            for name in file_list:
+                if '_sk' in name:
+                    ca['private_key'] = name
+            ca['domain'] = peer['domain']
+            result = env.get_template('docker-compose-ca.yaml.tmpl').render(
+                ca=ca,
+            )
+
+            folder = machine_path + "/%s/%s" % (peer_org['title'], peer['ip'])
+            __save_file(folder, "docker-compose-ca.yaml", result)
 
 
 def build_crypto_config():
@@ -362,6 +344,7 @@ def generate_machine():
 
     build_orderer_config()
     build_peer_config()
+    build_ca()
     print("#########  copy machine file ##############\n")
 
     # 复制生成好的crypto-config和channel-artifacts

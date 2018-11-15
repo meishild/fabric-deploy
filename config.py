@@ -48,6 +48,15 @@ peer_tmpl_list = [
                 }
             ]
         },
+        'ca': {
+            'name': 'ca',
+            'ip': '192.168.12.74',
+            'port': 7054,
+            'admin': {
+                'username': 'admin',
+                'password': 'admin',
+            }
+        }
     },
     {
         'title': 'org2',
