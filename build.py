@@ -110,9 +110,10 @@ def __init_orderer_config(orderer_cfg):
     orderer_ports = []
     orderer_address = []
     for i in range(0, len(orderer_cfg['ips'])):
-        orderer_hosts.append("orderer%d.%s:%s" % (i + 1, domain, orderer_cfg['ips'][i]))
-        orderer_ports.append("orderer%d.%s:%s" % (i + 1, domain, orderer_cfg['ports'][0]))
-        orderer_address.append("orderer%d.%s" % (i + 1, domain))
+        id = i + 1
+        orderer_hosts.append("orderer%d.%s:%s" % (id, domain, orderer_cfg['ips'][i]))
+        orderer_ports.append("orderer%d.%s:%s" % (id, domain, orderer_cfg['ports'][0]))
+        orderer_address.append("orderer%d" % id)
 
     global orderer_config
     orderer_config = {
@@ -296,7 +297,6 @@ def build_configtx_config():
     result = tmpl.render(
         orderer=orderer_config['orderer'],
         org_list=org_peer_list,
-        orderer_addresses=orderer_config['orderer']['orderer_ports'],
         kafka_brokers=orderer_config['kafka']['kafka_ports'],
     )
     __save_file(deploy_path, "configtx.yaml", result)
@@ -382,6 +382,6 @@ def deploy(need_generate=False):
 if __name__ == '__main__':
     argv = sys.argv
     if len(argv) == 2:
-        deploy(argv[1] != "clean")
+        deploy(argv[1] == "clean")
     else:
         deploy(True)

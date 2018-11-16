@@ -15,8 +15,8 @@ OrdererOrgs:
         Locality: San Francisco
 
     Specs:
-        - Hostname: orderer1.shuwen.com
-        - Hostname: orderer2.shuwen.com
+        - Hostname: orderer1
+        - Hostname: orderer2
 
 # ---------------------------------------------------------------------------
 # "PeerOrgs" - Definition of organizations managing peer nodes

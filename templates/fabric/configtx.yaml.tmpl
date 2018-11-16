@@ -177,7 +177,7 @@ Orderer: &OrdererDefaults
     # Available types are "solo" and "kafka"
     OrdererType: {{ orderer.type }}
 
-    Addresses:{% for address in orderer_addresses %}
+    Addresses:{% for address in orderer.orderer_ports %}
         - {{ address }}{% endfor %}
 
     # Batch Timeout: The amount of time to wait before creating a batch
