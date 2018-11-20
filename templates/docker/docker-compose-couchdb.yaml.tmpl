@@ -1,0 +1,23 @@
+# @author haiyang.song
+# @date 2018-11-6
+
+version: '2'
+
+networks:
+  {{ network }}:
+      external:
+          name: {{ network }}
+services:{% for db in dbs %}
+  {{ db.name }}:
+    container_name: {{ db.name }}
+    image: hyperledger/fabric-couchdb
+    environment:
+    - COUCHDB_USER={{ db.user }}
+    - COUCHDB_PASSWORD={{ db.password }}
+    volumes:{% for volume in db.volumes %}
+    - {{ volume }}{% endfor %}
+    ports:
+    - "{{ db.port }}:{{ db.port }}"
+    networks:
+    - {{ network }}
+{% endfor %}

@@ -3,7 +3,7 @@
 
 version: '2'
 
-services:
+services:{% for k in k_list %}
   {{ k.name }}:
     image: hyperledger/fabric-kafka
     restart: always
@@ -33,3 +33,4 @@ services:
       - "{{ host }}"{% endfor %}
     ports:{% for port in k.ports %}
       - "{{ port }}"{% endfor %}
+{% endfor %}

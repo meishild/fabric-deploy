@@ -3,7 +3,7 @@
 
 version: '2'
 
-services:
+services:{% for zk in zk_list %}
   {{ zk.name }}:
     image: hyperledger/fabric-zookeeper
     restart: always
@@ -22,3 +22,4 @@ services:
       - "{{host}}"{% endfor %}
     ports:{% for port in zk.ports %}
       - "{{port}}"{% endfor %}
+{% endfor %}

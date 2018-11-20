@@ -68,6 +68,8 @@ Organizations:
         AnchorPeers:
             - Host:  peer0.org1.icdoit.com
             - Port:  7051
+            - Host:  peer1.org1.icdoit.com
+            - Port:  7051
     
     - &Org2
         # DefaultOrg defines the organization which is used in the sampleconfig
@@ -207,7 +209,7 @@ Orderer: &OrdererDefaults
 
     Addresses:
         - orderer1.shuwen.com:7050
-        - orderer2.shuwen.com:7050
+        - orderer2.shuwen.com:8050
 
     # Batch Timeout: The amount of time to wait before creating a batch
     BatchTimeout: 2s

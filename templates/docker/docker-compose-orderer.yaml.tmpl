@@ -3,7 +3,7 @@
 
 version: '2'
 
-services:
+services:{% for o in orderer_list %}
   {{ o.name }}:
     image: hyperledger/fabric-orderer
     container_name: {{ o.name }}
@@ -36,3 +36,4 @@ services:
       - "{{ host }}"{% endfor %}{% for host in kafka_hosts %}
       - "{{ host }}"{% endfor %}{% for host in orderer_hosts %}
       - "{{ host }}"{% endfor %}
+{% endfor %}
