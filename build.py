@@ -36,6 +36,9 @@ def generate_machine():
         shutil.rmtree(machine_path)
         os.makedirs(machine_path)
 
+    if len(org_list) == 0:
+        init_cfg()
+
     gen_orderers.build_orderer_config(orderer_config)
     gen_peers.build_peer_config(orderer_config, org_list)
 
