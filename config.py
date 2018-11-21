@@ -64,12 +64,12 @@ orderer_tmpl_config = {
 org1_peers_tmpl_config = {
     'machines': [
         {
-            'ip': '192.168.12.75',
+            'ip': '192.168.12.76',
             'ports': [7051, 7052, 7053],
             'db': {
                 "type": 'couch_db',
                 "couch_db": {
-                    'ip': '192.168.12.75',
+                    'ip': '192.168.12.76',
                     "port": 5984,
                     "user": "couchdb",
                     "password": "couchdb",
@@ -79,7 +79,7 @@ org1_peers_tmpl_config = {
                 'type': 'fabric-ca',
                 'fabric-ca': {
                     'name': 'ca',
-                    'ip': '192.168.12.754',
+                    'ip': '192.168.12.76',
                     'port': 7054,
                     'admin': {
                         'username': 'admin',
@@ -90,12 +90,12 @@ org1_peers_tmpl_config = {
             'is_anchor_peer': True
         },
         {
-            'ip': '192.168.12.76',
+            'ip': '192.168.12.77',
             'ports': [7051, 7052, 7053],
             'db': {
                 "type": 'couch_db',
                 "couch_db": {
-                    'ip': '192.168.12.76',
+                    'ip': '192.168.12.77',
                     "port": 5984,
                     "user": "couchdb",
                     "password": "couchdb",
