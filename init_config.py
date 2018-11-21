@@ -11,54 +11,6 @@ from config import *
 
 
 def __init_zookeeper_config(zk_config):
-    """
-    zookeeper_tmpl_config = {
-        'machines': [
-            {'ip': '192.168.12.74', 'ports': [2181, 2888, 3888]},
-            {'ip': '192.168.12.75', 'ports': [2181, 2888, 3888]},
-            {'ip': '192.168.12.76', 'ports': [2181, 2888, 3888]},
-        ],
-        # 是否需要独立部署，如果不需要配置机器即可，不会生成配置
-        'need_deploy': True
-    }
-    :param zk_config:
-    :return:
-    {
-        'machines': {
-            '192.168.12.74': [{
-                'id': 1,
-                'name': 'z1',
-                'ip': '192.168.12.74',
-                'port0': 2181,
-                'port1': 2888,
-                'port2': 3888,
-                'volumes': ['/opt/chainData/zookeeper/z1/:/data/'],
-                'ports': ['2181:2181', '2888:2888', '3888:3888']
-            }],
-            '192.168.12.75': [{
-                'id': 2,
-                'name': 'z2',
-                'ip': '192.168.12.75',
-                'port0': 2181,
-                'port1': 2888,
-                'port2': 3888,
-                'volumes': ['/opt/chainData/zookeeper/z2/:/data/'],
-                'ports': ['2181:2181', '2888:2888', '3888:3888']
-            }],
-            '192.168.12.76': [{
-                'id': 3,
-                'name': 'z3',
-                'ip': '192.168.12.76',
-                'port0': 2181,
-                'port1': 2888,
-                'port2': 3888,
-                'volumes': ['/opt/chainData/zookeeper/z3/:/data/'],
-                'ports': ['2181:2181', '2888:2888', '3888:3888']
-            }]
-        },
-        'zk_hosts': ['z1:192.168.12.74', 'z2:192.168.12.75', 'z3:192.168.12.76']
-    }
-    """
     zk_list = zk_config['machines']
     zk_ip_dicts = {}
     zk_hosts = []
@@ -71,83 +23,30 @@ def __init_zookeeper_config(zk_config):
         if ip not in zk_ip_dicts:
             zk_ip_dicts[ip] = []
 
-        zk_ports.append("z%d:%s" % (i + 1, zk_list[i]['ports'][0]))
+        zk_ports.append("z%d:%s" % (i + 1, zk_list[i]['port']))
         zk_hosts.append("z%d:%s" % (i + 1, ip))
         zk_dict = {
             'id': id,
             'name': 'z%d' % id,
             'ip': ip,
-            'port0': zk_list[i]['ports'][0],
-            'port1': zk_list[i]['ports'][1],
-            'port2': zk_list[i]['ports'][2],
+            'port': zk_list[i]['port'],
             'volumes': ['%s/zookeeper/z%d/:/data/' % (volumes_path, id)],
-            'ports': ['%s:%s' % (port, port) for port in zk_list[i]['ports']]
+            'ports': ["%d:2188" % zk_list[i]['port']],
         }
+
         zk_ip_dicts[ip].append(zk_dict)
-        zoo_server_list.append("server.%(id)d=%(name)s:%(port1)d:%(port2)d" % zk_dict)
+        zoo_server_list.append("server.%(id)d=%(name)s:2888:3888" % zk_dict)
     return {
         'machines': zk_ip_dicts,
         'zk_hosts': zk_hosts,
         'zk_ports': zk_ports,
         'zoo_server': " ".join(zoo_server_list),
-        'is_need_gen': zk_config['is_need_gen']
+        'is_need_gen': zk_config['is_need_gen'],
+        'single': zk_list[0]['ip'] == zk_list[1]['ip']
     }
 
 
 def __init_kafka_config(kafka_config):
-    """
-    kafka_tmpl_config = {
-        'machines': [
-            {'ip': '192.168.12.74', 'port': 9092},
-            {'ip': '192.168.12.75', 'port': 9092},
-            {'ip': '192.168.12.76', 'port': 9092},
-            {'ip': '192.168.12.77', 'port': 9092},
-        ],
-        # 是否需要独立部署，如果不需要配置机器即可，不会生成配置
-        'need_deploy': True,
-        'zookeeper': zookeeper_tmpl_config
-    }
-    :return:
-    {
-        'machines': {
-            '192.168.12.74': [{
-                'id': 1,
-                'name': 'k1',
-                'ip': '192.168.12.74',
-                'port': 9092,
-                'volumes': ['/opt/chainData/kafka/k1/:/data/'],
-                'ports': ['9092:9092', '9092:9092', '9092:9092', '9092:9092']
-            }],
-            '192.168.12.75': [{
-                'id': 2,
-                'name': 'k2',
-                'ip': '192.168.12.75',
-                'port': 9092,
-                'volumes': ['/opt/chainData/kafka/k2/:/data/'],
-                'ports': ['9092:9092', '9092:9092', '9092:9092', '9092:9092']
-            }],
-            '192.168.12.76': [{
-                'id': 3,
-                'name': 'k3',
-                'ip': '192.168.12.76',
-                'port': 9092,
-                'volumes': ['/opt/chainData/kafka/k3/:/data/'],
-                'ports': ['9092:9092', '9092:9092', '9092:9092', '9092:9092']
-            }],
-            '192.168.12.77': [{
-                'id': 4,
-                'name': 'k4',
-                'ip': '192.168.12.77',
-                'port': 9092,
-                'volumes': ['/opt/chainData/kafka/k4/:/data/'],
-                'ports': ['9092:9092', '9092:9092', '9092:9092', '9092:9092']
-            }]
-        },
-        'k_hosts': ['k1:192.168.12.74', 'k2:192.168.12.75', 'k3:192.168.12.76', 'k4:192.168.12.77'],
-        'k_ports': ['k1:9092', 'k2:9092', 'k3:9092', 'k4:9092']
-    }
-    """
-
     k_hosts = []
     k_ports = []
 
@@ -170,145 +69,19 @@ def __init_kafka_config(kafka_config):
                 'ip': ip,
                 'port': kafka_list[i]['port'],
                 'volumes': ['%s/kafka/k%d/:/data/' % (volumes_path, id)],
-                'ports': ['%s:%s' % (item['port'], item['port']) for item in kafka_list]
+                'ports': ['%s:9092' % kafka_list[i]['port']]
             }
         )
     return {
         'machines': zk_ip_dicts,
         'k_hosts': k_hosts,
         'k_ports': k_ports,
-        'is_need_gen': kafka_config['is_need_gen']
+        'is_need_gen': kafka_config['is_need_gen'],
+        'single': kafka_list[0]['ip'] == kafka_list[1]['ip']
     }
 
 
 def __init_orderer_config(orderer_cfg):
-    """
-    orderer_tmpl_config = {
-        'name': 'Orderer',
-        'mspid': 'OrdererMSP',
-        'domain': 'shuwen.com',
-        'machines': [
-            {'ip': '192.168.12.74', 'port': '7050', },
-            {'ip': '192.168.12.74', 'port': '8050', }
-        ],
-        'type': 'kafka',
-        'kafka': kafka_tmpl_config,
-        # 是否需要独立部署，如果不需要配置机器即可，不会生成配置
-        'need_deploy': True,
-    }
-    :param orderer_cfg:
-    :return:
-    {
-        'orderer': {
-            'orderer_ip_dicts': {
-                '192.168.12.74': [{
-                    'id': 1,
-                    'domain': 'shuwen.com',
-                    'name': 'orderer1.shuwen.com',
-                    'ip': '192.168.12.74',
-                    'port': '7050',
-                    'mspid': 'OrdererMSP',
-                    'ports': ['7050:7050'],
-                    'volumes': ['/opt/chainData/orderer/orderer1/:/var/hyperledger/production/',
-                    './channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block',
-                    './crypto-config/ordererOrganizations/shuwen.com/orderers/orderer1.shuwen.com/msp:/var/hyperledger/orderer/msp',
-                    './crypto-config/ordererOrganizations/shuwen.com/orderers/orderer1.shuwen.com/tls:/var/hyperledger/orderer/tls']
-                }, {
-                    'id': 2,
-                    'domain': 'shuwen.com',
-                    'name': 'orderer2.shuwen.com',
-                    'ip': '192.168.12.74',
-                    'port': '8050',
-                    'mspid': 'OrdererMSP',
-                    'ports': ['8050:8050'],
-                    'volumes': ['/opt/chainData/orderer/orderer2/:/var/hyperledger/production/',
-                    './channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block',
-                    './crypto-config/ordererOrganizations/shuwen.com/orderers/orderer2.shuwen.com/msp:/var/hyperledger/orderer/msp',
-                    './crypto-config/ordererOrganizations/shuwen.com/orderers/orderer2.shuwen.com/tls:/var/hyperledger/orderer/tls']
-                }]
-            },
-            'orderer_hosts': ['orderer1.shuwen.com:192.168.12.74', 'orderer2.shuwen.com:192.168.12.74'],
-            'orderer_ports': ['orderer1.shuwen.com:7050', 'orderer2.shuwen.com:8050'],
-            'orderer_address': ['orderer1', 'orderer2'],
-            'name': 'Orderer',
-            'mspid': 'OrdererMSP',
-            'domain': 'shuwen.com'
-        },
-        'kafka': {
-            'kafka_ip_dicts': {
-                '192.168.12.74': [{
-                    'id': 1,
-                    'name': 'k1',
-                    'ip': '192.168.12.74',
-                    'port': 9092,
-                    'volumes': ['/opt/chainData/kafka/k1/:/data/'],
-                    'ports': ['9092:9092', '9092:9092', '9092:9092', '9092:9092']
-                }],
-                '192.168.12.75': [{
-                    'id': 2,
-                    'name': 'k2',
-                    'ip': '192.168.12.75',
-                    'port': 9092,
-                    'volumes': ['/opt/chainData/kafka/k2/:/data/'],
-                    'ports': ['9092:9092', '9092:9092', '9092:9092', '9092:9092']
-                }],
-                '192.168.12.76': [{
-                    'id': 3,
-                    'name': 'k3',
-                    'ip': '192.168.12.76',
-                    'port': 9092,
-                    'volumes': ['/opt/chainData/kafka/k3/:/data/'],
-                    'ports': ['9092:9092', '9092:9092', '9092:9092', '9092:9092']
-                }],
-                '192.168.12.77': [{
-                    'id': 4,
-                    'name': 'k4',
-                    'ip': '192.168.12.77',
-                    'port': 9092,
-                    'volumes': ['/opt/chainData/kafka/k4/:/data/'],
-                    'ports': ['9092:9092', '9092:9092', '9092:9092', '9092:9092']
-                }]
-            },
-            'kafka_hosts': ['k1:192.168.12.74', 'k2:192.168.12.75', 'k3:192.168.12.76', 'k4:192.168.12.77'],
-            'kafka_ports': ['k1:9092', 'k2:9092', 'k3:9092', 'k4:9092']
-        },
-        'zookeeper': {
-            'zk_ip_dicts': {
-                '192.168.12.74': [{
-                    'id': 1,
-                    'name': 'z1',
-                    'ip': '192.168.12.74',
-                    'port0': 2181,
-                    'port1': 2888,
-                    'port2': 3888,
-                    'volumes': ['/opt/chainData/zookeeper/z1/:/data/'],
-                    'ports': ['2181:2181', '2888:2888', '3888:3888']
-                }],
-                '192.168.12.75': [{
-                    'id': 2,
-                    'name': 'z2',
-                    'ip': '192.168.12.75',
-                    'port0': 2181,
-                    'port1': 2888,
-                    'port2': 3888,
-                    'volumes': ['/opt/chainData/zookeeper/z2/:/data/'],
-                    'ports': ['2181:2181', '2888:2888', '3888:3888']
-                }],
-                '192.168.12.76': [{
-                    'id': 3,
-                    'name': 'z3',
-                    'ip': '192.168.12.76',
-                    'port0': 2181,
-                    'port1': 2888,
-                    'port2': 3888,
-                    'volumes': ['/opt/chainData/zookeeper/z3/:/data/'],
-                    'ports': ['2181:2181', '2888:2888', '3888:3888']
-                }]
-            },
-            'zk_hosts': ['z1:192.168.12.74', 'z2:192.168.12.75', 'z3:192.168.12.76']
-        }
-    }
-    """
     orderer_ip_dicts = {}
     domain = orderer_cfg['domain']
 

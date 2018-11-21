@@ -23,7 +23,8 @@ def __build_zookeeper(orderer_config):
         result = tmpl.render(
             zk_list=zk_list,
             zoo_servers=orderer_config['zookeeper']['zoo_server'],
-            zk_hosts=orderer_config['zookeeper']['zk_hosts']
+            zk_hosts=orderer_config['zookeeper']['zk_hosts'],
+            single=orderer_config['zookeeper']['single']
         )
         folder = machine_path + "/orderer/%s" % ip
         save_file(folder, "docker-zk.yaml", result)
@@ -43,10 +44,11 @@ def __build_kafka(orderer_config):
             k_list=k_list,
             zoo_servers=",".join(orderer_config['zookeeper']['zk_ports']),
             zk_hosts=orderer_config['zookeeper']['zk_hosts'],
-            kafka_hosts=orderer_config['kafka']['k_hosts']
+            kafka_hosts=orderer_config['kafka']['k_hosts'],
+            single=orderer_config['zookeeper']['single']
         )
         folder = machine_path + "/orderer/%s" % ip
-        save_file(folder, "docker-zk.yaml", result)
+        save_file(folder, "docker-kafka.yaml", result)
 
 
 def __build_orderer_config(orderer_config):

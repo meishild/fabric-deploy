@@ -28,9 +28,9 @@ services:{% for k in k_list %}
       - KAFKA_LOG_RETENTION_MS=-1
     volumes:{% for volume in k.volumes %}
       - {{ volume }}{% endfor %}
-    extra_hosts:{% for host in zk_hosts %}
+    {% if not single %}extra_hosts:{% for host in zk_hosts %}
       - "{{ host }}"{% endfor %}{% for host in kafka_hosts %}
-      - "{{ host }}"{% endfor %}
+      - "{{ host }}"{% endfor %}{% endif %}
     ports:{% for port in k.ports %}
       - "{{ port }}"{% endfor %}
 {% endfor %}
