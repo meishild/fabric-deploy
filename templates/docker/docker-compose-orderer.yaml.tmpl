@@ -6,6 +6,8 @@ version: '2'
 services:{% for o in orderer_list %}
   {{ o.name }}:
     image: hyperledger/fabric-orderer
+    restart: always
+    hostname: {{ o.name }}
     container_name: {{ o.name }}
     environment:
       - ORDERER_GENERAL_LOGLEVEL=INFO

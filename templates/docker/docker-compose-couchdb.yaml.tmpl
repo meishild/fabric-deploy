@@ -11,6 +11,8 @@ services:{% for db in dbs %}
   {{ db.name }}:
     container_name: {{ db.name }}
     image: hyperledger/fabric-couchdb
+    restart: always
+    hostname: {{ db.name }}
     environment:
     - COUCHDB_USER={{ db.user }}
     - COUCHDB_PASSWORD={{ db.password }}

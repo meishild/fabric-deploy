@@ -5,6 +5,8 @@ version: '2'
 services:
   {{ca.name}}:
     image: hyperledger/fabric-ca
+    restart: always
+    hostname: {{ ca.name }}
     environment:
     - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
     - FABRIC_CA_SERVER_CA_NAME={{ca.name}}

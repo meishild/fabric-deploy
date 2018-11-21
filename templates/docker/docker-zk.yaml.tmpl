@@ -9,6 +9,7 @@ services:{% for zk in zk_list %}
     restart: always
     container_name: {{ zk.name }}
     hostname: {{ zk.name }}
+    restart: always
     environment:
       - quorumListenOnAllIPs=true
       # ID在集合中必须是唯一的并且应该有一个值在1-255之间。

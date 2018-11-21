@@ -11,6 +11,8 @@ services:{% for p in peers %}
   {{ p.name }}:
     container_name: {{ p.name }}
     image: hyperledger/fabric-peer
+    restart: always
+    hostname: {{ p.name }}
     environment:
     - GODEBUG=netdns=go
     - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
