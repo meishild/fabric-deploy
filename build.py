@@ -76,4 +76,4 @@ if __name__ == '__main__':
     if len(argv) == 2:
         deploy(argv[1] == "clean")
     else:
-        deploy(True)
+        deploy(False)
