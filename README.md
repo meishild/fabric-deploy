@@ -1,8 +1,5 @@
 # fabric生产部署快速脚本
-
 v 0.0.1
-
-
 
 ## clean
 docker stop $(docker ps -q) & docker rm $(docker ps -aq) && rm -fr /opt/chainData/ && docker network rm net
