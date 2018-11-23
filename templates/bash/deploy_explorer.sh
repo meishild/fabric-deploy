@@ -71,9 +71,9 @@ function config(){
 	explorer_db_pwd="password"
 	explorer_db_name="fabricexplorer"
 	#configure explorer to connect to specific Blockchain network using given configuration
-	network_config_file=$(pwd)/examples/$fabricBlockchainNetworkName/config.json
+	network_config_file=$(pwd)/config.json
 	#configure explorer to connect to specific Blockchain network using given crypto materials
-	network_crypto_base_path=$(pwd)/examples/$fabricBlockchainNetworkName/crypto
+	network_crypto_base_path=$(pwd)/../crypto-config
 
 	# local vnet configuration
 
@@ -190,6 +190,7 @@ function deploy_run_explorer(){
 		-e DATABASE_PASSWD=$explorer_db_pwd \
 		-v $network_config_file:/opt/explorer/app/platform/fabric/config.json \
 		-v $network_crypto_base_path:/tmp/crypto \
+		-v blockchain-explorer:/opt/blockchain-explorer \
 		-p 8090:8080 \
 		$fabric_explorer_tag
 }

@@ -8,7 +8,6 @@ services:{% for k in k_list %}
     image: hyperledger/fabric-kafka
     restart: always
     container_name: {{ k.name }}
-    restart: always
     hostname: {{ k.name }}
     environment:
       - KAFKA_BROKER_ID={{ k.id }}

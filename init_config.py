@@ -31,7 +31,7 @@ def __init_zookeeper_config(zk_config):
             'ip': ip,
             'port': zk_list[i]['port'],
             'volumes': ['%s/zookeeper/z%d/:/data/' % (volumes_path, id)],
-            'ports': ["%d:2188" % zk_list[i]['port']],
+            'ports': ["%d:2181" % zk_list[i]['port']],
         }
 
         zk_ip_dicts[ip].append(zk_dict)
@@ -49,6 +49,7 @@ def __init_zookeeper_config(zk_config):
 def __init_kafka_config(kafka_config):
     k_hosts = []
     k_ports = []
+    k_ip_ports = []
 
     kafka_list = kafka_config['machines']
     zk_ip_dicts = {}
@@ -61,7 +62,7 @@ def __init_kafka_config(kafka_config):
 
         k_hosts.append("k%d:%s" % (i + 1, ip))
         k_ports.append("k%d:%s" % (i + 1, kafka_list[i]['port']))
-
+        k_ip_ports.append("%s:%s" % (ip, kafka_list[i]['port']))
         zk_ip_dicts[ip].append(
             {
                 'id': id,
@@ -76,6 +77,7 @@ def __init_kafka_config(kafka_config):
         'machines': zk_ip_dicts,
         'k_hosts': k_hosts,
         'k_ports': k_ports,
+        'k_ip_ports': k_ip_ports,
         'is_need_gen': kafka_config['is_need_gen'],
         'single': kafka_list[0]['ip'] == kafka_list[1]['ip']
     }
@@ -145,7 +147,7 @@ def __init_couch_db(domain, db, id):
         "password": db['password'],
         'volumes': [
             '%s/couchdb/couchdb%d:/opt/couchdb/data' % (volumes_path, id),
-        ]
+        ],
     }
 
 
@@ -214,7 +216,8 @@ def __init_org_peers_config(org):
             ca = machine['ca']['fabric-ca']
             fabric_ca = __init_fabric_ca(domain, ca, id)
             ca_ip_dicts[ip].append(fabric_ca)
-        if 'is_anchor_peer':
+
+        if machine['is_anchor_peer']:
             anchor_peers.append({
                 'host': peer_dict['name'],
                 'port': peer_dict['port0'],

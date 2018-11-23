@@ -1,0 +1,83 @@
+{
+  "network-configs": {
+    "network-1": {
+      "version": "1.0",
+      "clients": {
+        "client-1": {
+          "tlsEnable": true,
+          "organization": "Org1MSP",
+          "channel": "mychannel",
+          "credentialStore": {
+            "path": "./tmp/credentialStore_Org1/credential",
+            "cryptoStore": {
+              "path": "./tmp/credentialStore_Org1/crypto"
+            }
+          }
+        }
+      },
+      "channels": {
+        "mychannel": {
+          "peers": {
+            "peer0.org1.icdoit.com": {}
+          },
+          "connection": {
+            "timeout": {
+              "peer": {
+                "endorser": "6000",
+                "eventHub": "6000",
+                "eventReg": "6000"
+              }
+            }
+          }
+        }
+      },
+      "organizations": {
+        "Org1MSP": {
+          "mspid": "Org1MSP",
+          "fullpath": false,
+          "adminPrivateKey": {
+            "path": "/tmp/crypto/peerOrganizations/org1.icdoit.com/users/Admin@org1.icdoit.com/msp/keystore"
+          },
+          "signedCert": {
+            "path": "/tmp/crypto/peerOrganizations/org1.icdoit.com/users/Admin@org1.icdoit.com/msp/signcerts"
+          }
+        },
+        "OrdererMSP": {
+          "mspid": "OrdererMSP",
+          "adminPrivateKey": {
+            "path": "/tmp/crypto/ordererOrganizations/shuwen.com/users/Admin@shuwen.com/msp/keystore"
+          }
+        }
+      },
+      "peers": {
+        "peer0.org1.icdoit.com": {
+          "tlsCACerts": {
+            "path": "/tmp/crypto/peerOrganizations/org1.icdoit.com/peers/peer0.org1.icdoit.com/tls/ca.crt"
+          },
+          "url": "grpcs://192.168.12.76:7051",
+          "eventUrl": "grpcs://192.168.12.76:7053",
+          "grpcOptions": {
+            "ssl-target-name-override": "peer0.org1.icdoit.com"
+          }
+        },
+        "peer1.org1.icdoit.com": {
+          "tlsCACerts": {
+            "path": "/tmp/crypto/peerOrganizations/org1.icdoit.com/peers/peer1.org1.icdoit.com/tls/ca.crt"
+          },
+          "url": "grpcs://192.168.12.77:7051",
+          "eventUrl": "grpcs://192.168.12.77:7053",
+          "grpcOptions": {
+            "ssl-target-name-override": "peer1.org1.icdoit.com"
+          }
+        }
+      },
+      "orderers": {
+        "orderer.shuwen.com": {
+          "url": "grpcs://192.168.12.74:7050"
+        }
+      }
+    }
+  },
+  "configtxgenToolPath": "../bin",
+  "license": "Apache-2.0"
+}

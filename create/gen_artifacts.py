@@ -29,7 +29,7 @@ def build_configtx_config(orderer_cfg, org_list):
     result = tmpl.render(
         orderer=orderer_cfg['orderer'],
         org_list=org_list,
-        kafka_brokers=orderer_cfg['kafka']['k_ports'],
+        kafka_brokers=orderer_cfg['kafka']['k_ip_ports'],
     )
     save_file(deploy_path, "configtx.yaml", result)
 

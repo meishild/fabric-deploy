@@ -1,5 +1,5 @@
 #!/bin/bash
-
+{% for volume in volumes %}
 rm -fr {{volume}}
 mkdir -p {{volume}}
 chown 5984:5984 {{volume}} -R
@@ -7,3 +7,4 @@ chown 5984:5984 {{volume}} -R
 docker network create {{ network }}
 
 echo "INIT FINISH"
+{% endfor %}

@@ -9,7 +9,6 @@ services:{% for zk in zk_list %}
     restart: always
     container_name: {{ zk.name }}
     hostname: {{ zk.name }}
-    restart: always
     environment:
       - quorumListenOnAllIPs=true
       # ID在集合中必须是唯一的并且应该有一个值在1-255之间。
@@ -22,5 +21,7 @@ services:{% for zk in zk_list %}
     {% if not single %}extra_hosts:{% for host in zk_hosts %}
       - "{{host}}"{% endfor %}{% endif %}
     ports:{% for port in zk.ports %}
-      - "{{port}}"{% endfor %}
+      - "{{port}}"{% endfor %}{% if not single %}
+      - "2888:2888"
+      - "3888:3888"{% endif %}
 {% endfor %}

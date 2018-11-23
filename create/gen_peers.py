@@ -22,7 +22,7 @@ def __build_couchdb_config(org_list):
 
             peer_bash = b_env.get_template('initCouchDB.sh.tmpl').render(
                 network='net',
-                volume="%s/couchdb" % volumes_path
+                volumes=[db['volumes'][0].split(":")[0] for db in db_list],
             )
             save_file(folder + "/scripts", "initCouchDB.sh", peer_bash)
 

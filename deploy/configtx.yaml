@@ -67,9 +67,7 @@ Organizations:
 
         AnchorPeers:
             - Host:  peer0.org1.icdoit.com
-            - Port:  7051
-            - Host:  peer1.org1.icdoit.com
-            - Port:  7051
+              Port:  7051
     
     - &Org2
         # DefaultOrg defines the organization which is used in the sampleconfig
@@ -97,7 +95,7 @@ Organizations:
 
         AnchorPeers:
             - Host:  peer0.org2.test.com
-            - Port:  7051
+              Port:  7051
     
 
 ################################################################################
@@ -234,10 +232,10 @@ Orderer: &OrdererDefaults
         # this list to identify the brokers of the ordering service.
         # NOTE: Use IP:port notation.
         Brokers:
-            - k1:9092
-            - k2:9092
-            - k3:9092
-            - k4:9092
+            - 192.168.12.74:9092
+            - 192.168.12.75:9092
+            - 192.168.12.76:9092
+            - 192.168.12.77:9092
 
     # Organizations is the list of orgs which are defined as participants on
     # the orderer side of the network
