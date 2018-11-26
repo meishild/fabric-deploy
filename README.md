@@ -7,9 +7,9 @@ docker stop $(docker ps -q) & docker rm $(docker ps -aq) && rm -fr /opt/chainDat
 ## cp
 cd /home/fabric/ && rm -fr * && rm -fr /home/songhaiyang/machine.tar.gz
 
-rm -fr machine.tar.gz && scp songhaiyang@06:/home/fabric/fabric-deploy/machine.tar.gz ./
+rm -fr machine.tar.gz && scp songhaiyang@192.168.12.79:/home/fabric/fabric-deploy/machine.tar.gz ./
 
-scp machine.tar.gz songhaiyang@03: && scp machine.tar.gz songhaiyang@04: && scp machine.tar.gz songhaiyang@05: && scp machine.tar.gz songhaiyang@01: && scp machine.tar.gz songhaiyang@02:
+scp machine.tar.gz songhaiyang@192.168.12.74: && scp machine.tar.gz songhaiyang@192.168.12.75: && scp machine.tar.gz songhaiyang@192.168.12.76: && scp machine.tar.gz songhaiyang@192.168.12.77: && scp machine.tar.gz songhaiyang@192.168.12.78:
 
 cd /home/fabric && mv /home/songhaiyang/machine.tar.gz /home/fabric && tar zxvf machine.tar.gz
 
@@ -25,7 +25,7 @@ cd /home/fabric/machine/orderer/192.168.12.76/ && docker-compose -f docker-zk.ya
 
 ## 77
 cd /home/fabric/machine/orderer/192.168.12.77/ && docker-compose -f docker-kafka.yaml up -d
-docker logs -f k4
+
 ===================== ZOOKEPPER & KAFKA Start Finish ===================== 
 ## 74
 docker exec -it z1 bin/zkServer.sh status
@@ -40,7 +40,6 @@ cd /home/fabric/machine/orderer/192.168.12.75/ && docker-compose -f docker-compo
 ## 76
 cd /home/fabric/machine/org1/192.168.12.76/ && sh scripts/initCouchDB.sh
 docker-compose -f docker-compose-couchdb.yaml -f docker-compose-peer.yaml -f docker-compose-cli.yaml up -d
-
 docker-compose -f docker-compose-ca.yaml up -d
 
 ===================== peer0.org1 PEER AND CA Start Finish ===================== 
@@ -68,8 +67,8 @@ docker exec -it cli peer channel join -b mychannel.block
 ===================== peer0.org1 joined channel 'mychannel' =====================
 
 ####
-scp songhaiyang@01:/home/fabric/machine/org1/192.168.12.76/scripts/mychannel.block ./
-scp mychannel.block songhaiyang@02: && scp mychannel.block songhaiyang@05:
+scp songhaiyang@192.168.12.76:/home/fabric/machine/org1/192.168.12.76/scripts/mychannel.block ./
+scp mychannel.block songhaiyang@192.168.12.77: && scp mychannel.block songhaiyang@192.168.12.78:
 
 ===================== peer1.org1 joined channel 'mychannel' =====================
 # 77
