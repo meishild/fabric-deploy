@@ -101,7 +101,7 @@ org1_peers_tmpl_config = {
                     "password": "couchdb",
                 }
             },
-            'is_anchor_peer': False
+            'is_anchor_peer': True
         },
     ]
 }

@@ -184,10 +184,11 @@ def __init_org_peers_config(org):
         if ip not in ca_ip_dicts:
             ca_ip_dicts[ip] = []
         id = i
+        name = "peer%d.%s" % (id, domain)
         peer_dict = {
             "id": id,
             "domain": domain,
-            "name": "peer%d.%s" % (id, domain),
+            "name": name,
             "port0": machine['ports'][0],
             "port1": machine['ports'][1],
             "ip": ip,
@@ -196,7 +197,7 @@ def __init_org_peers_config(org):
             'ports': ['%s:%s' % (port, port) for port in machine['ports']],
             'volumes': [
                 '/var/run/:/host/var/run/',
-                '%s/peer/peer%d:/var/hyperledger/production' % (volumes_path, id),
+                '%s/peer/%s:/var/hyperledger/production' % (volumes_path, name),
                 './crypto-config/peerOrganizations/%s/peers/peer%d.%s/msp:/etc/hyperledger/fabric/msp' % (
                     domain, id, domain),
                 './crypto-config/peerOrganizations/%s/peers/peer%d.%s/tls:/etc/hyperledger/fabric/tls' % (
