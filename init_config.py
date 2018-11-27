@@ -239,8 +239,17 @@ def __init_org_peers_config(org):
 
 def __init_peer_config(org_cfg_list):
     org_peer_list = []
+    anchor_peers = []
     for org in org_cfg_list:
-        org_peer_list.append(__init_org_peers_config(org))
+        org_peer_dict = __init_org_peers_config(org)
+        org_peer_list.append(org_peer_dict)
+        for anchor_peer_dict in org_peer_dict['anchor_peers']:
+            anchor_peers.append("%s:%s" % (anchor_peer_dict['host'], anchor_peer_dict['ip']))
+
+    for org_peer in org_peer_list:
+        peer_hosts = org_peer['peer_hosts']
+
+        org_peer['peer_hosts'] = list(set(peer_hosts + anchor_peers))
     return org_peer_list
 
 
