@@ -98,6 +98,8 @@ Organizations:
         AnchorPeers:
             - Host:  peer0.org2.test.com
               Port:  7051
+            - Host:  peer1.org2.test.com
+              Port:  7051
     
 
 ################################################################################

@@ -121,6 +121,19 @@ org2_peers_tmpl_config = {
                 }
             },
             'is_anchor_peer': True
+        }, {
+            'ip': '192.168.12.79',
+            'ports': [7051, 7052, 7053],
+            'db': {
+                "type": 'couch_db',
+                "couch_db": {
+                    'ip': '192.168.12.79',
+                    "port": 5984,
+                    "user": "couchdb",
+                    "password": "couchdb",
+                }
+            },
+            'is_anchor_peer': True
         }
     ]
 }
