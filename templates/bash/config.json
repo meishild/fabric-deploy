@@ -69,10 +69,30 @@
           "grpcOptions": {
             "ssl-target-name-override": "peer1.org1.icdoit.com"
           }
+        },
+        "peer0.org2.test.com": {
+          "tlsCACerts": {
+            "path": "/tmp/crypto/peerOrganizations/org2.icdoit.com/peers/peer0.org2.icdoit.com/tls/ca.crt"
+          },
+          "url": "grpcs://192.168.12.78:7051",
+          "eventUrl": "grpcs://192.168.12.78:7053",
+          "grpcOptions": {
+            "ssl-target-name-override": "peer0.org2.icdoit.com"
+          }
+        },
+        "peer1.org2.test.com": {
+          "tlsCACerts": {
+            "path": "/tmp/crypto/peerOrganizations/org2.icdoit.com/peers/peer1.org2.icdoit.com/tls/ca.crt"
+          },
+          "url": "grpcs://192.168.12.79:7051",
+          "eventUrl": "grpcs://192.168.12.79:7053",
+          "grpcOptions": {
+            "ssl-target-name-override": "peer1.org2.icdoit.com"
+          }
         }
       },
       "orderers": {
-        "orderer.shuwen.com": {
+        "orderer1.shuwen.com": {
           "url": "grpcs://192.168.12.74:7050"
         }
       }

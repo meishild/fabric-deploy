@@ -68,8 +68,6 @@ Organizations:
         AnchorPeers:
             - Host:  peer0.org1.icdoit.com
               Port:  7051
-            - Host:  peer1.org1.icdoit.com
-              Port:  7051
     
     - &Org2
         # DefaultOrg defines the organization which is used in the sampleconfig
@@ -97,8 +95,6 @@ Organizations:
 
         AnchorPeers:
             - Host:  peer0.org2.test.com
-              Port:  7051
-            - Host:  peer1.org2.test.com
               Port:  7051
     
 

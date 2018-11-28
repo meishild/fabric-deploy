@@ -1,0 +1,73 @@
+{
+  "network-configs": {
+    "network-1": {
+      "version": "1.0",
+      "clients": {
+        "{{ e.client_name }}": {
+          "tlsEnable": true,
+          "organization": "{{ org.mspid }}",
+          "channel": "{{ channel_name }}",
+          "credentialStore": {
+            "path": "./tmp/credentialStore_Org1/credential",
+            "cryptoStore": {
+              "path": "./tmp/credentialStore_Org1/crypto"
+            }
+          }
+        }
+      },
+      "channels": {
+        "{{ channel_name }}": {
+          "peers": {
+            "{{ e.archor_peer.host }}": {}
+          },
+          "connection": {
+            "timeout": {
+              "peer": {
+                "endorser": "6000",
+                "eventHub": "6000",
+                "eventReg": "6000"
+              }
+            }
+          }
+        }
+      },
+      "organizations": { {% for org in org_list %}
+        "{{ org.mspid }}": {
+          "mspid": "{{ org.mspid }}",
+          "fullpath": false,
+          "adminPrivateKey": {
+            "path": "/tmp/crypto/peerOrganizations/{{ org.title }}.{{ org.domain }}/users/Admin@{{ org.title }}.{{ org.domain }}/msp/keystore"
+          },
+          "signedCert": {
+            "path": "/tmp/crypto/peerOrganizations/{{ org.title }}.{{ org.domain }}/users/Admin@{{ org.title }}.{{ org.domain }}/msp/signcerts"
+          }
+        },{% endfor %}
+        "{{ orderer.mspid }}": {
+          "mspid": "{{ orderer.mspid }}",
+          "adminPrivateKey": {
+            "path": "/tmp/crypto/ordererOrganizations/{{ orderer.domain }}/users/Admin@{{ orderer.domain }}/msp/keystore"
+          }
+        }
+      },
+      "peers": { {% for peer in peers %}
+        "{{ peer.name }}": {
+          "tlsCACerts": {
+            "path": "/tmp/crypto/peerOrganizations/{{ peer.domain }}/peers/{{ peer.name }}/tls/ca.crt"
+          },
+          "url": "grpcs://{{ peer.ip }}:{{ peer.port0 }}",
+          "eventUrl": "grpcs://{{ peer.ip }}:{{ peer.port2 }}",
+          "grpcOptions": {
+            "ssl-target-name-override": "{{ peer.name }}"
+          }
+        },{% endfor %}
+      },
+      "orderers": { {% for orderer in orderers %}
+        "{{ orderer.name }}": {
+          "url": "grpcs://{{ orderer.ip }}:{{ orderer.port }}"
+        },{% endfor %}
+      }
+    }
+  },
+  "configtxgenToolPath": "../bin",
+  "license": "Apache-2.0"
+}

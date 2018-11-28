@@ -49,8 +49,7 @@ def generate_machine():
         for folder in os.listdir(machine_path + org['title']):
             to = machine_path + org['title'] + "/" + folder
             __copy(to)
-            if folder == org['anchor_peers'][0]['ip']:
-                shutil.copytree(path + "/templates/chaincode/", to + "/chaincode")
+            shutil.copytree(path + "/templates/chaincode/", to + "/chaincode")
 
     for folder in os.listdir(machine_path + "orderer"):
         __copy(machine_path + "/orderer/" + folder)

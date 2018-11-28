@@ -34,15 +34,6 @@ def build_configtx_config(orderer_cfg, org_list):
     save_file(deploy_path, "configtx.yaml", result)
 
 
-def build_generate_bash(org_list):
-    tmpl = b_env.get_template('generateArtifacts.sh.tmpl')
-
-    result = tmpl.render(
-        org_list=org_list,
-    )
-    save_file(deploy_path, "generateArtifacts.sh", result)
-
-
 def generate_artifacts_and_crypto(orderer_config, org_list):
     print("#########  generate artifacts and crypto config ##############\n")
 
@@ -57,7 +48,6 @@ def generate_artifacts_and_crypto(orderer_config, org_list):
 
     build_crypto_config(orderer_config, org_list)
     build_configtx_config(orderer_config, org_list)
-    build_generate_bash(org_list)
 
     print("#########  generate artifacts ##############\n")
     if platform.platform().split("-")[0] == "Darwin":
@@ -65,5 +55,21 @@ def generate_artifacts_and_crypto(orderer_config, org_list):
     else:
         shutil.copytree(path + "/templates/bin/linux", deploy_path + "bin")
 
-    os.system("cd %s && sh generateArtifacts.sh" % deploy_path)
+    b_h = "cd %s && " % deploy_path
+    print("Generate certificates using cryptogen tool\n")
+    os.system("%s bin/cryptogen generate --config=./crypto-config.yaml" % b_h)
+
+    print("Generating Orderer Genesis block\n")
+    os.system("%s bin/configtxgen -profile TwoOrgsOrdererGenesis -outputBlock ./channel-artifacts/genesis.block" % b_h)
+
+    print("Generating channel configuration transaction 'channel.tx'\n")
+    channel_name = "mychannel"
+    gen_channel_bash = "%s bin/configtxgen -profile TwoOrgsChannel -outputCreateChannelTx ./channel-artifacts/channel.tx -channelID %s"
+    os.system(gen_channel_bash % (b_h, channel_name))
+    for org in org_list:
+        print("Generating anchor peer update for %s\n" % org['mspid'])
+        channel_name = "mychannel"
+        bash = "%s bin/configtxgen -profile TwoOrgsChannel -outputAnchorPeersUpdate ./channel-artifacts/%sanchors.tx -channelID %s " \
+               "-asOrg %s"
+        os.system(bash % (b_h, org['mspid'], channel_name, org['mspid']))
     print("#########  finish generate artifacts and crypto config ##############\n")

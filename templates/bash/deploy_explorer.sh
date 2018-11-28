@@ -190,7 +190,6 @@ function deploy_run_explorer(){
 		-e DATABASE_PASSWD=$explorer_db_pwd \
 		-v $network_config_file:/opt/explorer/app/platform/fabric/config.json \
 		-v $network_crypto_base_path:/tmp/crypto \
-		-v blockchain-explorer:/opt/blockchain-explorer \
 		-p 8090:8080 \
 		$fabric_explorer_tag
 }

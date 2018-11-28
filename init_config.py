@@ -173,6 +173,7 @@ def __init_org_peers_config(org):
 
     peer_hosts = []
     anchor_peers = []
+    explorer_list = []
     domain = "%s.%s" % (org['title'], org['domain'])
     for i in range(0, len(org['peers']['machines'])):
         machine = org['peers']['machines'][i]
@@ -191,6 +192,7 @@ def __init_org_peers_config(org):
             "name": name,
             "port0": machine['ports'][0],
             "port1": machine['ports'][1],
+            "port2": machine['ports'][2],
             "ip": ip,
             'network': 'net',
             'mspid': org['mspid'],
@@ -219,11 +221,20 @@ def __init_org_peers_config(org):
             ca_ip_dicts[ip].append(fabric_ca)
 
         if machine['is_anchor_peer']:
-            anchor_peers.append({
+            archor_peer_dict = {
                 'host': peer_dict['name'],
                 'port': peer_dict['port0'],
                 'ip': peer_dict['ip']
-            })
+            }
+            anchor_peers.append(archor_peer_dict)
+
+            if 'explorer' in machine:
+                explorer = machine['explorer']
+                e_dict = {
+                    'archor_peer': archor_peer_dict
+                }
+                e_dict.update(explorer)
+                explorer_list.append(e_dict)
 
     return {
         'title': org['title'],
@@ -235,6 +246,7 @@ def __init_org_peers_config(org):
         'ca_ip_dicts': ca_ip_dicts,
         'peer_hosts': peer_hosts,
         'anchor_peers': anchor_peers,
+        'explorers': explorer_list
     }
 
 
@@ -254,99 +266,41 @@ def __init_peer_config(org_cfg_list):
     return org_peer_list
 
 
+def __init_explorer_config(explorer_cfg_list, orderer_cfg, org_cfg_list):
+    explorer_list = []
+    channle_name = ''
+    for explorer in explorer_cfg_list:
+        cfg = {
+            'client': {
+                'mspid': '',
+                'channel_name': '',
+                'client_name': '',
+            },
+            'clannels': {
+                'channel_name': '',
+                'peers': []
+            },
+            'msps': {
+                'mspid': '',
+                'domain': '',
+            },
+            'peers': [
+                {
+                    'name': '',
+                    'domain': '',
+                    'ip': '',
+                    'ports': []
+                }
+            ]
+        }
+        cfg.update(explorer)
+        explorer_list.append(cfg)
+    return explorer_list
+
+
 def init_orderer_config(orderer_cfg):
     return __init_orderer_config(orderer_cfg)
 
 
 def init_peer_list_config(org_cfg_list):
-    """
-
-    :param org_cfg_list:
-    :return:
-    [{
-        'title': 'org1',
-        'name': 'Org1',
-        'domain': 'icdoit.com',
-        'mspid': 'Org1MSP',
-        'peer_ip_dicts': {
-            '192.168.12.76': [{
-                'id': 0,
-                'domain': 'org1.icdoit.com',
-                'name': 'peer0.org1.icdoit.com',
-                'port0': 7051,
-                'port1': 7052,
-                'ip': '192.168.12.76',
-                'network': 'net',
-                'mspid': 'Org1MSP',
-                'ports': ['7051:7051', '7052:7052', '7053:7053'],
-                'volumes': ['/var/run/:/host/var/run/', '/opt/chainData/peer/peer0:/var/hyperledger/production',
-                './crypto-config/peerOrganizations/org1.icdoit.com/peers/peer0.org1.icdoit.com/msp:/etc/hyperledger/fabric/msp',
-                './crypto-config/peerOrganizations/org1.icdoit.com/peers/peer0.org1.icdoit.com/tls:/etc/hyperledger/fabric/tls']
-            }, {
-                'id': 1,
-                'domain': 'org1.icdoit.com',
-                'name': 'peer1.org1.icdoit.com',
-                'port0': 7051,
-                'port1': 7052,
-                'ip': '192.168.12.76',
-                'network': 'net',
-                'mspid': 'Org1MSP',
-                'ports': ['7051:7051', '7052:7052', '7053:7053'],
-                'volumes': ['/var/run/:/host/var/run/', '/opt/chainData/peer/peer1:/var/hyperledger/production',
-                './crypto-config/peerOrganizations/org1.icdoit.com/peers/peer1.org1.icdoit.com/msp:/etc/hyperledger/fabric/msp',
-                './crypto-config/peerOrganizations/org1.icdoit.com/peers/peer1.org1.icdoit.com/tls:/etc/hyperledger/fabric/tls']
-            }]
-        },
-        'db_ip_dicts': {
-            '192.168.12.76': [{
-                'id': 0,
-                'name': 'couchdb0.org1.icdoit.com',
-                'ip': '127.0.0.1',
-                'port': 5984,
-                'user': 'couchdb',
-                'password': 'couchdb',
-                'volumes': ['/opt/chainData/couchdb/couchdb0:/opt/couchdb/data']
-            }]
-        },
-        'ca_ip_dicts': {
-            '192.168.12.76': [{
-                'name': 'ca0.org1.icdoit.com',
-                'ip': '192.168.12.74',
-                'port': 7054,
-                'admin': {
-                    'username': 'admin',
-                    'password': 'admin'
-                }
-            }]
-        }
-    }, {
-        'title': 'org2',
-        'name': 'Org2',
-        'domain': 'test.com',
-        'mspid': 'Org2MSP',
-        'peer_ip_dicts': {
-            '192.168.12.78': [{
-                'id': 0,
-                'domain': 'org2.test.com',
-                'name': 'peer0.org2.test.com',
-                'port0': 7051,
-                'port1': 7052,
-                'ip': '192.168.12.78',
-                'network': 'net',
-                'mspid': 'Org2MSP',
-                'ports': ['7051:7051', '7052:7052', '7053:7053'],
-                'volumes': ['/var/run/:/host/var/run/', '/opt/chainData/peer/peer0:/var/hyperledger/production',
-                './crypto-config/peerOrganizations/org2.test.com/peers/peer0.org2.test.com/msp:/etc/hyperledger/fabric/msp',
-                './crypto-config/peerOrganizations/org2.test.com/peers/peer0.org2.test.com/tls:/etc/hyperledger/fabric/tls']
-            }]
-        },
-        'db_ip_dicts': {
-            '192.168.12.78': []
-        },
-        'ca_ip_dicts': {
-            '192.168.12.78': []
-        }
-    }]
-
-    """
     return __init_peer_config(org_cfg_list)

@@ -70,7 +70,50 @@ def __build_ca_config(org_list):
             save_file(folder, "docker-compose-ca.yaml", result)
 
 
+def __build_explorer_config(org_list, orderer_dict):
+    peers = []
+    orderers = []
+    for org in org_list:
+        for ip, m_list in org['peer_ip_dicts'].items():
+            peers.extend(m_list)
+
+    for ip, m_list in orderer_dict['orderer']['orderer_ip_dicts'].items():
+        orderers.extend(m_list)
+
+    for org in org_list:
+        for explorer_cfg in org['explorers']:
+            result = env.get_template('docker-compose-explorer.yaml.tmpl').render(
+                e=explorer_cfg,
+                network='net'
+            )
+            folder = machine_path + "/%s/%s/explorer/" % (org['title'], explorer_cfg['ip'])
+            save_file(folder, "docker-compose-explorer.yaml", result)
+
+            result = env.get_template('docker-compose-explorer-postgres.yaml.tmpl').render(
+                e=explorer_cfg,
+                network='net'
+            )
+            folder = machine_path + "/%s/%s/explorer/" % (org['title'], explorer_cfg['ip'])
+            save_file(folder, "docker-compose-explorer-postgres.yaml", result)
+
+        tmpl = env.get_template('config.json.tmpl')
+        for explorer_cfg in org['explorers']:
+            result = tmpl.render(
+                e=explorer_cfg,
+                org=org,
+                org_list=org_list,
+                network='net',
+                channel_name='mychannel',
+                orderer=orderer_dict['orderer'],
+                peers=peers,
+                orderers=orderers
+            )
+            folder = machine_path + "/%s/%s/explorer/" % (org['title'], explorer_cfg['ip'])
+            save_file(folder, "config.json", result)
+
+
 def build_peer_config(orderer_dict, org_list):
     __build_couchdb_config(org_list)
     __build_peer_config(org_list, orderer_dict)
     __build_ca_config(org_list)
+    __build_explorer_config(org_list, orderer_dict)

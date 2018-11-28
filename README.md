@@ -3,12 +3,10 @@ v 0.0.1
 
 ## clean
 docker stop $(docker ps -q) 
-docker rm $(docker ps -aq)
-rm -fr /opt/chainData/ 
-docker network rm net
+docker rm $(docker ps -aq) && rm -fr /opt/chainData/ && docker network rm net
 
 ## cp
-cd /home/fabric/ && rm -fr * && rm -fr /home/songhaiyang/machine.tar.gz
+cd /home/fabric/ && rm -fr machine && rm -fr /home/songhaiyang/machine.tar.gz
 
 rm -fr machine.tar.gz && scp songhaiyang@192.168.12.79:/home/fabric/fabric-deploy/machine.tar.gz ./
 

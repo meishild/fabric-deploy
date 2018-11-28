@@ -87,6 +87,19 @@ org1_peers_tmpl_config = {
                     }
                 }
             },
+            'explorer': {
+                'client_name': 'c_name',
+                'ip': '192.168.12.74',
+                'port': '8090',
+                'pg_db': {
+                    'name': 'fabric-explorer-pg',
+                    'ip': '192.168.12.74',
+                    'port': 5432,
+                    'database': 'fabricexplorer',
+                    'username': 'hppoc',
+                    'password': 'password'
+                }
+            },
             'is_anchor_peer': True
         },
         {
@@ -101,7 +114,7 @@ org1_peers_tmpl_config = {
                     "password": "couchdb",
                 }
             },
-            'is_anchor_peer': True
+            'is_anchor_peer': False
         },
     ]
 }
@@ -115,19 +128,6 @@ org2_peers_tmpl_config = {
                 "type": 'couch_db',
                 "couch_db": {
                     'ip': '192.168.12.78',
-                    "port": 5984,
-                    "user": "couchdb",
-                    "password": "couchdb",
-                }
-            },
-            'is_anchor_peer': True
-        }, {
-            'ip': '192.168.12.79',
-            'ports': [7051, 7052, 7053],
-            'db': {
-                "type": 'couch_db',
-                "couch_db": {
-                    'ip': '192.168.12.79',
                     "port": 5984,
                     "user": "couchdb",
                     "password": "couchdb",
