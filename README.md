@@ -85,6 +85,7 @@ docker exec cli peer channel create -o orderer1.shuwen.com:7050 -c mychannel -f 
 docker exec cli cp mychannel.block scripts
 docker exec cli peer channel join -b mychannel.block
 docker exec cli peer channel list
+
 ===================== peer0.org1 joined channel 'mychannel' =====================
 
 ####
@@ -92,6 +93,7 @@ scp songhaiyang@192.168.12.76:/home/fabric/machine/org1/192.168.12.76/scripts/my
 scp mychannel.block songhaiyang@192.168.12.77: && scp mychannel.block songhaiyang@192.168.12.78:
 
 ===================== peer1.org1 joined channel 'mychannel' =====================
+
 ### 77
 cp /home/songhaiyang/mychannel.block /home/fabric/machine/org1/192.168.12.77/scripts
 docker exec cli peer channel join -b scripts/mychannel.block

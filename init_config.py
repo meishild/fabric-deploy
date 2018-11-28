@@ -7,7 +7,7 @@
 # python_version  :3.4.3
 # description     :
 # ==============================================================================
-from config import *
+from base_config import *
 
 
 def __init_zookeeper_config(zk_config):
@@ -104,12 +104,12 @@ def __init_orderer_config(orderer_cfg):
         orderer_ip_dicts[m_ip].append({
             "id": id,
             "domain": domain,
-            'type': orderer_cfg['type'],
             "name": "orderer%d.%s" % (id, domain),
             "ip": m_cfg['ip'],
             'port': m_cfg['port'],
             'mspid': orderer_cfg['mspid'],
-            'ports': ["%s:%s" % (m_cfg['port'], m_cfg['port'])],
+            'ports': ["%s:7050" % m_cfg['port']],
+            'type': orderer_cfg['type'],
             'volumes': [
                 '%s/orderer/orderer%d/:/var/hyperledger/production/' % (volumes_path, id),
                 './channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block',
@@ -128,7 +128,8 @@ def __init_orderer_config(orderer_cfg):
             'name': orderer_cfg['name'],
             'mspid': orderer_cfg['mspid'],
             'domain': orderer_cfg['domain'],
-            'is_need_gen': orderer_cfg['is_need_gen']
+            'is_need_gen': orderer_cfg['is_need_gen'],
+            'type': orderer_cfg['type'],
         }
     }
 
@@ -197,7 +198,8 @@ def __init_org_peers_config(org):
             "ip": ip,
             'network': default_net,
             'mspid': org['mspid'],
-            'ports': ['%s:%s' % (port, port) for port in machine['ports']],
+            'ports': ['%s:7051' % machine['ports'][0], '%s:7052' % machine['ports'][1], '%s:7053' % machine['ports'][2]],
+            'type': machine['db']['type'],
             'volumes': [
                 '/var/run/:/host/var/run/',
                 '%s/peer/%s:/var/hyperledger/production' % (volumes_path, name),
@@ -248,7 +250,7 @@ def __init_org_peers_config(org):
         'ca_ip_dicts': ca_ip_dicts,
         'peer_hosts': peer_hosts,
         'anchor_peers': anchor_peers,
-        'explorers': explorer_list
+        'explorers': explorer_list,
     }
 
 

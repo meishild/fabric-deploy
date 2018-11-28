@@ -7,3 +7,13 @@
 # python_version  :3.4.3
 # description     :
 # ==============================================================================
+import os
+
+
+def save_file(folder, name, content):
+    if not os.path.isdir(folder):
+        os.makedirs(folder)
+
+    f = open(folder + "/" + name, "w")
+    f.write(content)
+    f.close()

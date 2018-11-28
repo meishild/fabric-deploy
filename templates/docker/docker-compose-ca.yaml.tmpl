@@ -14,7 +14,7 @@ services:
     - FABRIC_CA_SERVER_TLS_CERTFILE=/etc/hyperledger/fabric-ca-server-config/{{ca.name}}-cert.pem
     - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config/{{ca.private_key}}
     ports:
-    - "{{ca.port}}:{{ca.port}}"
+    - "{{ca.port}}:7054"
     command: sh -c 'fabric-ca-server start --ca.certfile /etc/hyperledger/fabric-ca-server-config/{{ca.name}}-cert.pem --ca.keyfile /etc/hyperledger/fabric-ca-server-config/{{ca.private_key}} -b {{ca.admin.username}}:{{ca.admin.password}} -d'
     volumes:
     - ./crypto-config/peerOrganizations/{{ca.domain}}/ca/:/etc/hyperledger/fabric-ca-server-config

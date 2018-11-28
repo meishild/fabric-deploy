@@ -7,20 +7,6 @@
 # python_version  :3.4.3
 # description     :
 # ==============================================================================
-import os
-
-from jinja2 import Environment, PackageLoader
-
-volumes_path = "/opt/chainData"
-
-path = os.path.dirname(os.path.realpath(__file__))
-deploy_path = path + "/deploy/"
-machine_path = path + "/machine/"
-
-env = Environment(loader=PackageLoader('templates', 'docker'))
-f_env = Environment(loader=PackageLoader('templates', 'fabric'))
-b_env = Environment(loader=PackageLoader('templates', 'bash'))
-
 channel_name = 'mychannel'
 default_net = 'net'
 
@@ -161,12 +147,3 @@ org_tmpl_list = [
     org1_tmpl_config,
     org2_tmpl_config
 ]
-
-
-def save_file(folder, name, content):
-    if not os.path.isdir(folder):
-        os.makedirs(folder)
-
-    f = open(folder + "/" + name, "w")
-    f.write(content)
-    f.close()

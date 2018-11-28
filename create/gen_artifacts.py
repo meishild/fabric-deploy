@@ -10,7 +10,8 @@
 import platform
 import shutil
 
-from config import *
+from base_config import *
+from create import save_file
 
 
 def build_crypto_config(orderer_cfg, org_list):

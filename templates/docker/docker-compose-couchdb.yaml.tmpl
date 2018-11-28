@@ -19,7 +19,7 @@ services:{% for db in dbs %}
     volumes:{% for volume in db.volumes %}
     - {{ volume }}{% endfor %}
     ports:
-    - "{{ db.port }}:{{ db.port }}"
+    - "{{ db.port }}:5984"
     networks:
     - {{ network }}
 {% endfor %}

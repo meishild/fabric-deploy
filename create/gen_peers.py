@@ -7,12 +7,15 @@
 # python_version  :3.4.3
 # description     :
 # ==============================================================================
-from config import *
+from base_config import *
+from create import save_file
 
 
 def __build_couchdb_config(org_list):
     for org in org_list:
         for ip, db_list in org['db_ip_dicts'].items():
+            if len(db_list) == 0:
+                return
             result = env.get_template('docker-compose-couchdb.yaml.tmpl').render(
                 dbs=db_list,
                 network=default_net,
