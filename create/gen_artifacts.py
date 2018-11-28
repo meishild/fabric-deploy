@@ -25,11 +25,13 @@ def build_crypto_config(orderer_cfg, org_list):
 
 def build_configtx_config(orderer_cfg, org_list):
     tmpl = f_env.get_template('configtx.yaml.tmpl')
-
+    kafka_brokers = []
+    if 'kafka' in orderer_cfg:
+        kafka_brokers = orderer_cfg['kafka']['k_ip_ports']
     result = tmpl.render(
         orderer=orderer_cfg['orderer'],
         org_list=org_list,
-        kafka_brokers=orderer_cfg['kafka']['k_ip_ports'],
+        kafka_brokers=kafka_brokers,
     )
     save_file(deploy_path, "configtx.yaml", result)
 

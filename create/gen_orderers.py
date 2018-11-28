@@ -57,12 +57,21 @@ def __build_orderer_config(orderer_config):
         return
     orderer_ip_dicts = orderer_config['orderer']['orderer_ip_dicts']
     for ip in orderer_ip_dicts.keys():
+        zk_hosts = []
+        kafka_hosts = []
+        kafka_ports = []
+        if 'zookeeper' in orderer_config:
+            zk_hosts = orderer_config['zookeeper']['zk_hosts']
+        if 'kafka' in orderer_config:
+            kafka_hosts = orderer_config['kafka']['k_hosts']
+            kafka_ports = ",".join(orderer_config['kafka']['k_ports'])
+
         result = tmpl.render(
             orderer_list=orderer_ip_dicts[ip],
             orderer_hosts=orderer_config['orderer']['orderer_hosts'],
-            zk_hosts=orderer_config['zookeeper']['zk_hosts'],
-            kafka_hosts=orderer_config['kafka']['k_hosts'],
-            kafka_ports=",".join(orderer_config['kafka']['k_ports'])
+            zk_hosts=zk_hosts,
+            kafka_hosts=kafka_hosts,
+            kafka_ports=kafka_ports
         )
         folder = machine_path + "/orderer/%s" % ip
         save_file(folder, "docker-compose-orderer.yaml", result)

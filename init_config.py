@@ -104,6 +104,7 @@ def __init_orderer_config(orderer_cfg):
         orderer_ip_dicts[m_ip].append({
             "id": id,
             "domain": domain,
+            'type': orderer_cfg['type'],
             "name": "orderer%d.%s" % (id, domain),
             "ip": m_cfg['ip'],
             'port': m_cfg['port'],
