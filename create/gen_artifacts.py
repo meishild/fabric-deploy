@@ -63,12 +63,10 @@ def generate_artifacts_and_crypto(orderer_config, org_list):
     os.system("%s bin/configtxgen -profile TwoOrgsOrdererGenesis -outputBlock ./channel-artifacts/genesis.block" % b_h)
 
     print("Generating channel configuration transaction 'channel.tx'\n")
-    channel_name = "mychannel"
     gen_channel_bash = "%s bin/configtxgen -profile TwoOrgsChannel -outputCreateChannelTx ./channel-artifacts/channel.tx -channelID %s"
     os.system(gen_channel_bash % (b_h, channel_name))
     for org in org_list:
         print("Generating anchor peer update for %s\n" % org['mspid'])
-        channel_name = "mychannel"
         bash = "%s bin/configtxgen -profile TwoOrgsChannel -outputAnchorPeersUpdate ./channel-artifacts/%sanchors.tx -channelID %s " \
                "-asOrg %s"
         os.system(bash % (b_h, org['mspid'], channel_name, org['mspid']))

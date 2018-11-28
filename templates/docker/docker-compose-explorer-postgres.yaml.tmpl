@@ -20,6 +20,8 @@ services:
     - DATABASE_USERNAME={{ e.pg_db.username }}
     - DATABASE_PASSWORD={{ e.pg_db.password }}
     working_dir: /opt
+    volumes:{% for volume in e.pg_db.volumes %}
+    - {{ volume }}{% endfor %}
     ports:
     - {{ e.pg_db.port }}:5432
     networks:

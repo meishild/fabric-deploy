@@ -21,6 +21,9 @@ env = Environment(loader=PackageLoader('templates', 'docker'))
 f_env = Environment(loader=PackageLoader('templates', 'fabric'))
 b_env = Environment(loader=PackageLoader('templates', 'bash'))
 
+channel_name = 'mychannel'
+default_net = 'net'
+
 zookeeper_tmpl_config = {
     # 机器配置只需配置ip和端口，一台机机器多个zk需要端口不同
     # 只支持单机器部署，以及完全多机器部署，不要在同时使用

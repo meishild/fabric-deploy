@@ -194,7 +194,7 @@ def __init_org_peers_config(org):
             "port1": machine['ports'][1],
             "port2": machine['ports'][2],
             "ip": ip,
-            'network': 'net',
+            'network': default_net,
             'mspid': org['mspid'],
             'ports': ['%s:%s' % (port, port) for port in machine['ports']],
             'volumes': [
@@ -231,9 +231,10 @@ def __init_org_peers_config(org):
             if 'explorer' in machine:
                 explorer = machine['explorer']
                 e_dict = {
-                    'archor_peer': archor_peer_dict
+                    'archor_peer': archor_peer_dict,
                 }
                 e_dict.update(explorer)
+                e_dict['volumes'] = ['%s/postgresql/data' % volumes_path]
                 explorer_list.append(e_dict)
 
     return {
@@ -264,38 +265,6 @@ def __init_peer_config(org_cfg_list):
 
         org_peer['peer_hosts'] = list(set(peer_hosts + anchor_peers))
     return org_peer_list
-
-
-def __init_explorer_config(explorer_cfg_list, orderer_cfg, org_cfg_list):
-    explorer_list = []
-    channle_name = ''
-    for explorer in explorer_cfg_list:
-        cfg = {
-            'client': {
-                'mspid': '',
-                'channel_name': '',
-                'client_name': '',
-            },
-            'clannels': {
-                'channel_name': '',
-                'peers': []
-            },
-            'msps': {
-                'mspid': '',
-                'domain': '',
-            },
-            'peers': [
-                {
-                    'name': '',
-                    'domain': '',
-                    'ip': '',
-                    'ports': []
-                }
-            ]
-        }
-        cfg.update(explorer)
-        explorer_list.append(cfg)
-    return explorer_list
 
 
 def init_orderer_config(orderer_cfg):

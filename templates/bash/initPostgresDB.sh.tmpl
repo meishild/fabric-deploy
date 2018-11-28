@@ -1,0 +1,10 @@
+#!/bin/bash
+{% for volume in volumes %}
+rm -fr {{volume}}
+mkdir -p {{volume}}
+chown 70:70 {{volume}} -R
+
+docker network create {{ network }}
+
+echo "INIT FINISH"
+{% endfor %}

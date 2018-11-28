@@ -15,13 +15,13 @@ def __build_couchdb_config(org_list):
         for ip, db_list in org['db_ip_dicts'].items():
             result = env.get_template('docker-compose-couchdb.yaml.tmpl').render(
                 dbs=db_list,
-                network='net',
+                network=default_net,
             )
             folder = machine_path + "/%s/%s" % (org['title'], ip)
             save_file(folder, "docker-compose-couchdb.yaml", result)
 
             peer_bash = b_env.get_template('initCouchDB.sh.tmpl').render(
-                network='net',
+                network=default_net,
                 volumes=[db['volumes'][0].split(":")[0] for db in db_list],
             )
             save_file(folder + "/scripts", "initCouchDB.sh", peer_bash)
@@ -34,7 +34,7 @@ def __build_peer_config(org_list, orderer_dict):
                 peers=peer_list,
                 orderer_hosts=orderer_dict['orderer']['orderer_hosts'],
                 peer_hosts=org['peer_hosts'],
-                network='net'
+                network=default_net
             )
 
             folder = machine_path + "/%s/%s" % (org['title'], ip)
@@ -44,7 +44,7 @@ def __build_peer_config(org_list, orderer_dict):
                 p=peer_list[0],
                 orderer_hosts=orderer_dict['orderer']['orderer_hosts'],
                 peer_hosts=org['peer_hosts'],
-                network='net'
+                network=default_net
             )
 
             folder = machine_path + "/%s/%s" % (org['title'], ip)
@@ -84,17 +84,24 @@ def __build_explorer_config(org_list, orderer_dict):
         for explorer_cfg in org['explorers']:
             result = env.get_template('docker-compose-explorer.yaml.tmpl').render(
                 e=explorer_cfg,
-                network='net'
+                network=default_net
             )
             folder = machine_path + "/%s/%s/explorer/" % (org['title'], explorer_cfg['ip'])
             save_file(folder, "docker-compose-explorer.yaml", result)
 
             result = env.get_template('docker-compose-explorer-postgres.yaml.tmpl').render(
                 e=explorer_cfg,
-                network='net'
+                network=default_net
             )
             folder = machine_path + "/%s/%s/explorer/" % (org['title'], explorer_cfg['ip'])
             save_file(folder, "docker-compose-explorer-postgres.yaml", result)
+
+            result = b_env.get_template('initPostgresDB.sh.tmpl').render(
+                volumes=explorer_cfg['volumes'],
+                network=default_net
+            )
+            folder = machine_path + "/%s/%s/explorer/" % (org['title'], explorer_cfg['ip'])
+            save_file(folder, "initPostgresDB.sh", result)
 
         tmpl = env.get_template('config.json.tmpl')
         for explorer_cfg in org['explorers']:
@@ -102,8 +109,8 @@ def __build_explorer_config(org_list, orderer_dict):
                 e=explorer_cfg,
                 org=org,
                 org_list=org_list,
-                network='net',
-                channel_name='mychannel',
+                network=default_net,
+                channel_name=channel_name,
                 orderer=orderer_dict['orderer'],
                 peers=peers,
                 orderers=orderers

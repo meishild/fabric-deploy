@@ -59,12 +59,12 @@
           "grpcOptions": {
             "ssl-target-name-override": "{{ peer.name }}"
           }
-        },{% endfor %}
+        }{% if loop.index < loop.length %},{% endif %}{% endfor %}
       },
       "orderers": { {% for orderer in orderers %}
         "{{ orderer.name }}": {
           "url": "grpcs://{{ orderer.ip }}:{{ orderer.port }}"
-        },{% endfor %}
+        }{% if loop.index < loop.length %},{% endif %}{% endfor %}
       }
     }
   },
