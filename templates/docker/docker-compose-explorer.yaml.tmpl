@@ -22,7 +22,7 @@ services:
     - DATABASE_PASSWORD={{ e.pg_db.password }}
     working_dir: /opt
     volumes:
-    - ./crypto-config:/tmp/crypto
+    - ../crypto-config:/tmp/crypto
     - ./config.json:/opt/explorer/app/platform/fabric/config.json
     extra_hosts:
     - "{{ e.pg_db.name }}:{{ e.pg_db.ip }}"
