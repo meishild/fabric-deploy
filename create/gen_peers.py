@@ -64,7 +64,8 @@ def __build_ca_config(org_list):
             for name in file_list:
                 if '_sk' in name:
                     ca['private_key'] = name
-            ca['domain'] = org['domain']
+            ca['domain'] = org['title'] + "." + org['domain']
+            ca['name'] = 'ca.%s' % ca['domain']
             result = env.get_template('docker-compose-ca.yaml.tmpl').render(
                 ca=ca,
             )
