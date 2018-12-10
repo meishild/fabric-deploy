@@ -20,6 +20,11 @@ f_env = Environment(loader=PackageLoader('templates', 'fabric'))
 b_env = Environment(loader=PackageLoader('templates', 'bash'))
 
 volumes_path = "/opt/chainData"
-
 channel_name = 'mychannel'
 default_net = 'net'
+
+ca_dict = {
+    'country': 'China',
+    'province': 'ZheJiang',
+    'locality': 'HangZhou',
+}

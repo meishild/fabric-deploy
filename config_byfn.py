@@ -5,17 +5,20 @@
 # datetime        :2018/11/14
 # version         :1.0
 # python_version  :3.4.3
-# description     :
+# description     : byfn网络
 # ==============================================================================
 channel_name = 'mychannel'
 default_net = 'net'
+volumes_path = "/opt/chainData"
+
+byfn_ip = "192.168.12.79"
 
 orderer_tmpl_config = {
     'name': 'Orderer',
     'mspid': 'OrdererMSP',
     'domain': 'shuwen.com',
     'machines': [
-        {'ip': '192.168.12.79', 'port': '70500', },
+        {'ip': byfn_ip, 'port': '7050', },
     ],
     'type': 'solo',
     # 是否需要独立部署，如果不需要配置机器即可，不会生成配置
@@ -25,24 +28,24 @@ orderer_tmpl_config = {
 org1_peers_tmpl_config = {
     'machines': [
         {
-            'ip': '192.168.12.79',
+            'ip': byfn_ip,
             'ports': [7051, 7052, 7053],
             'db': {
                 "type": 'couch_db',
                 "couch_db": {
-                    'ip': '192.168.12.76',
-                    "port": 59840,
+                    'ip': byfn_ip,
+                    "port": 5984,
                     "user": "couchdb",
                     "password": "couchdb",
                 }
             },
             'explorer': {
                 'client_name': 'c_name',
-                'ip': '192.168.12.79',
+                'ip': byfn_ip,
                 'port': '8090',
                 'pg_db': {
                     'name': 'fabric-explorer-pg',
-                    'ip': '192.168.12.79',
+                    'ip': byfn_ip,
                     'port': 54320,
                     'database': 'fabricexplorer',
                     'username': 'hppoc',
@@ -65,7 +68,7 @@ org1_peers_tmpl_config = {
 org2_peers_tmpl_config = {
     'machines': [
         {
-            'ip': '192.168.12.79',
+            'ip': byfn_ip,
             'ports': [27051, 27052, 27053],
             'db': {
                 "type": 'level_db',

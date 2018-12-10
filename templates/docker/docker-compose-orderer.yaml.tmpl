@@ -16,12 +16,12 @@ services:{% for o in orderer_list %}
       - ORDERER_GENERAL_GENESISMETHOD=file
       - ORDERER_GENERAL_GENESISFILE=/var/hyperledger/orderer/orderer.genesis.block
       - ORDERER_GENERAL_LOCALMSPID={{ o.mspid }}
-      - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp
+      - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp{% if o.tls == True %}
       # enabled TLS
       - ORDERER_GENERAL_TLS_ENABLED=true
       - ORDERER_GENERAL_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
       - ORDERER_GENERAL_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
-      - ORDERER_GENERAL_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]{% if o.type == 'kafka' %}
+      - ORDERER_GENERAL_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]{% endif %}{% if o.type == 'kafka' %}
       - ORDERER_KAFKA_RETRY_LONGINTERVAL=10s
       - ORDERER_KAFKA_RETRY_LONGTOTAL=100s
       - ORDERER_KAFKA_RETRY_SHORTINTERVAL=1s

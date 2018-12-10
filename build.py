@@ -7,34 +7,38 @@
 # python_version  :3.4.3
 # description     :
 # ==============================================================================
+import os
 import shutil
 import sys
 
+import base_config
 import init_config
-from base_config import *
 from create import gen_peers, gen_artifacts, gen_orderers
 
 orderer_config = {}
 org_list = []
 config_file = "config_byfn"
+path = base_config.path
+deploy_path = base_config.deploy_path
+machine_path = base_config.machine_path
 
 
 def init_cfg():
-    global config_file
     if config_file is None:
         raise Exception("缺少配置文件")
 
     config_module = __import__(config_file)
-    global orderer_config, org_list
+
+    channel_name = getattr(config_module, "channel_name")
+    default_net = getattr(config_module, "default_net")
+    volumes_path = getattr(config_module, "volumes_path")
 
     orderer_tmpl_config = getattr(config_module, "orderer_tmpl_config")
     org_tmpl_list = getattr(config_module, "org_tmpl_list")
+    global orderer_config, org_list
+    init_config.init_config(volumes_path, default_net, channel_name)
     orderer_config = init_config.init_orderer_config(orderer_tmpl_config)
-    org_list = init_config.init_peer_list_config(org_cfg_list=org_tmpl_list)
-
-    global channel_name, default_net
-    channel_name = getattr(config_module, "channel_name")
-    default_net = getattr(config_module, "default_net")
+    org_list = init_config.init_peer_list_config(org_tmpl_list)
 
 
 def generate_artifacts():
@@ -88,7 +92,8 @@ def deploy(need_generate=False):
 
 if __name__ == '__main__':
     argv = sys.argv
-    config_file = 'config_cluster'
+    # config_file = 'config_cluster'
+    config_file = "config_dev"
     if len(argv) == 2:
         deploy(argv[1] == "clean")
     else:

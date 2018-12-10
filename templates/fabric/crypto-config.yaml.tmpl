@@ -10,9 +10,9 @@ OrdererOrgs:
   - Name: {{ orderer.name }}
     Domain: {{ orderer.domain }}
     CA:
-        Country: US
-        Province: California
-        Locality: San Francisco
+        Country: {{ orderer.country }}
+        Province: {{ orderer.province }}
+        Locality: {{ orderer.locality }}
 
     Specs:{% for host in orderer.orderer_address %}
         - Hostname: {{host}}{% endfor %}
@@ -27,12 +27,15 @@ PeerOrgs:
   # ---------------------------------------------------------------------------
   - Name: {{ org.name }}
     Domain: {{ org.title }}.{{ org.domain }}
+    ##  如果设置了EnableNodeOUs，就在msp下生成config.yaml文件
     EnableNodeOUs: true
     CA:
-        Country: US
-        Province: California
-        Locality: San Francisco
+        Country: {{ org.country }}
+        Province: {{ org.province }}
+        Locality: {{ org.locality }}
     Template:
+        ##  表示生成几个Peer
         Count: 2
     Users:
+        ##  表示生成几个 普通User
         Count: 1{% endfor %}

@@ -9,6 +9,7 @@
 # ==============================================================================
 channel_name = 'mychannel'
 default_net = 'net'
+volumes_path = "/opt/chainData"
 
 zookeeper_tmpl_config = {
     # 机器配置只需配置ip和端口，一台机机器多个zk需要端口不同
@@ -48,6 +49,7 @@ orderer_tmpl_config = {
     'kafka': kafka_tmpl_config,
     # 是否需要独立部署，如果不需要配置机器即可，不会生成配置
     'is_need_gen': True,
+    'tls': True,
 }
 
 org1_peers_tmpl_config = {
@@ -89,7 +91,8 @@ org1_peers_tmpl_config = {
                     'password': 'password'
                 }
             },
-            'is_anchor_peer': True
+            'is_anchor_peer': True,
+            'tls': True
         },
         {
             'ip': '192.168.12.77',
@@ -103,7 +106,8 @@ org1_peers_tmpl_config = {
                     "password": "couchdb",
                 }
             },
-            'is_anchor_peer': False
+            'is_anchor_peer': False,
+            'tls': True
         },
     ]
 }
@@ -122,7 +126,8 @@ org2_peers_tmpl_config = {
                     "password": "couchdb",
                 }
             },
-            'is_anchor_peer': True
+            'is_anchor_peer': True,
+            'tls': True
         }
     ]
 }

@@ -18,13 +18,13 @@ services:{% for p in peers %}
     - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
     - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE={{ p.network }}
     - CORE_LOGGING_LEVEL=INFO
-    - CORE_PEER_TLS_ENABLED=true
     - CORE_PEER_GOSSIP_USELEADERELECTION=true
     - CORE_PEER_GOSSIP_ORGLEADER=false
-    - CORE_PEER_PROFILE_ENABLED=true
+    - CORE_PEER_PROFILE_ENABLED=true{% if p.tls == True %}
+    - CORE_PEER_TLS_ENABLED=true
     - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
     - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
-    - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+    - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt{% endif %}
     - CORE_PEER_ID={{ p.name }}
     - CORE_PEER_ADDRESS={{ p.name }}:{{ p.port0 }}
     - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:{{ p.port1 }}
@@ -36,7 +36,7 @@ services:{% for p in peers %}
     - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME={{ p.db.user }}
     - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD={{ p.db.password }}{% endif %}
     working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
-    command: peer node start
+    command: peer node start{% if p.mode == dev %} --peer-chaincodedev=true{% endif %}
     extra_hosts:{% for host in orderer_hosts %}
     - "{{ host }}"{% endfor %}{% for host in peer_hosts %}
     - "{{ host }}"{% endfor %}{% if p.type == "couch_db" %}

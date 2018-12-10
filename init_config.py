@@ -7,7 +7,12 @@
 # python_version  :3.4.3
 # description     :
 # ==============================================================================
-from base_config import *
+import base_config
+
+volumes_path = base_config.volumes_path
+default_net = base_config.default_net
+channel_name = base_config.channel_name
+ca_dict = base_config.ca_dict
 
 
 def __init_zookeeper_config(zk_config):
@@ -101,7 +106,7 @@ def __init_orderer_config(orderer_cfg):
         orderer_ports.append("orderer%d.%s:%s" % (id, domain, m_cfg['port']))
         orderer_address.append("orderer%d" % id)
 
-        orderer_ip_dicts[m_ip].append({
+        orderer_dict = {
             "id": id,
             "domain": domain,
             "name": "orderer%d.%s" % (id, domain),
@@ -110,6 +115,7 @@ def __init_orderer_config(orderer_cfg):
             'mspid': orderer_cfg['mspid'],
             'ports': ["%s:7050" % m_cfg['port']],
             'type': orderer_cfg['type'],
+            'tls': orderer_cfg['tls'],
             'volumes': [
                 '%s/orderer/orderer%d/:/var/hyperledger/production/' % (volumes_path, id),
                 './channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block',
@@ -118,7 +124,8 @@ def __init_orderer_config(orderer_cfg):
                 './crypto-config/ordererOrganizations/%s/orderers/orderer%i.%s/tls:/var/hyperledger/orderer/tls' % (
                     domain, id, domain),
             ]
-        })
+        }
+        orderer_ip_dicts[m_ip].append(orderer_dict)
     orderer_config = {
         'orderer': {
             'orderer_ip_dicts': orderer_ip_dicts,
@@ -132,10 +139,12 @@ def __init_orderer_config(orderer_cfg):
             'type': orderer_cfg['type'],
         }
     }
+    orderer_config['orderer'].update(ca_dict)
 
     if orderer_cfg['type'] == 'kafka':
         orderer_config['kafka'] = __init_kafka_config(kafka_config=orderer_cfg['kafka'])
         orderer_config['zookeeper'] = __init_zookeeper_config(zk_config=orderer_cfg['kafka']['zookeeper'])
+
     return orderer_config
 
 
@@ -200,6 +209,7 @@ def __init_org_peers_config(org):
             'mspid': org['mspid'],
             'ports': ['%s:7051' % machine['ports'][0], '%s:7052' % machine['ports'][1], '%s:7053' % machine['ports'][2]],
             'type': machine['db']['type'],
+            'tls': machine['tls'],
             'volumes': [
                 '/var/run/:/host/var/run/',
                 '%s/peer/%s:/var/hyperledger/production' % (volumes_path, name),
@@ -211,6 +221,10 @@ def __init_org_peers_config(org):
         }
         peer_hosts.append("%(name)s:%(ip)s" % peer_dict)
         peer_ip_dicts[ip].append(peer_dict)
+
+        if 'mode' in machine:
+            peer_dict['mode'] = machine['mode']
+        peer_dict.update(ca_dict)
 
         if 'db' in machine and machine['db']['type'] == 'couch_db':
             db = machine['db']['couch_db']
@@ -240,7 +254,7 @@ def __init_org_peers_config(org):
                 e_dict['volumes'] = ['%s/postgresql/data' % volumes_path]
                 explorer_list.append(e_dict)
 
-    return {
+    org_config = {
         'title': org['title'],
         'name': org['name'],
         'domain': org['domain'],
@@ -252,6 +266,8 @@ def __init_org_peers_config(org):
         'anchor_peers': anchor_peers,
         'explorers': explorer_list,
     }
+    org_config.update(ca_dict)
+    return org_config
 
 
 def __init_peer_config(org_cfg_list):
@@ -268,6 +284,13 @@ def __init_peer_config(org_cfg_list):
 
         org_peer['peer_hosts'] = list(set(peer_hosts + anchor_peers))
     return org_peer_list
+
+
+def init_config(v_path, d_net, c_name):
+    global volumes_path, default_net, channel_name
+    volumes_path = v_path
+    default_net = d_net
+    channel_name = c_name
 
 
 def init_orderer_config(orderer_cfg):

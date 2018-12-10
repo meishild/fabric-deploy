@@ -5,14 +5,21 @@ SPDX-License-Identifier: Apache-2.0
 */
 package org.hyperledger.fabric.example;
 
-import java.util.List;
-
 import com.google.protobuf.ByteString;
 import io.netty.handler.ssl.OpenSsl;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hyperledger.fabric.shim.ChaincodeBase;
 import org.hyperledger.fabric.shim.ChaincodeStub;
+
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.Base64;
+import java.util.List;
+import java.util.Map;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -126,7 +133,7 @@ public class SimpleChaincode extends ChaincodeBase {
         }
         String key = args.get(0);
         //byte[] stateBytes
-        String val	= stub.getStringState(key);
+        String val = stub.getStringState(key);
         if (val == null) {
             return newErrorResponse(String.format("Error: state for %s is null", key));
         }
@@ -136,7 +143,39 @@ public class SimpleChaincode extends ChaincodeBase {
 
     public static void main(String[] args) {
         System.out.println("OpenSSL avaliable: " + OpenSsl.isAvailable());
-        new SimpleChaincode().start(args);
+        SimpleChaincode dataChainCode = new SimpleChaincode();
+        String cryptPath = ClassLoader.getSystemResource("").getPath() + "../resources/";
+        encode(cryptPath + "client.key");
+        encode(cryptPath + "client.crt");
+
+        setEnv("CORE_PEER_ADDRESS", "peer0.org1.icdoit.com:7052");
+        setEnv("CORE_CHAINCODE_ID_NAME", "datacore:1.0.0");
+        setEnv("CORE_PEER_TLS_ENABLED", "true");
+        setEnv("CORE_PEER_TLS_ROOTCERT_FILE", cryptPath + "peer.crt");
+        setEnv("CORE_TLS_CLIENT_KEY_PATH", cryptPath + "client.key.enc");
+        setEnv("CORE_TLS_CLIENT_CERT_PATH", cryptPath + "client.crt.enc");
+        dataChainCode.start(args);
     }
 
+    public static void setEnv(String key, String value) {
+        try {
+            Map<String, String> env = System.getenv();
+            Class<?> cl = env.getClass();
+            Field field = cl.getDeclaredField("m");
+            field.setAccessible(true);
+            Map<String, String> writableEnv = (Map<String, String>) field.get(env);
+            writableEnv.put(key, value);
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to set environment variable", e);
+        }
+    }
+
+    public static void encode(String path) {
+        try {
+            byte b[] = Files.readAllBytes(Paths.get(path));
+            Files.write(Paths.get(path + ".enc"), Base64.getEncoder().encode(b), StandardOpenOption.CREATE_NEW);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }
